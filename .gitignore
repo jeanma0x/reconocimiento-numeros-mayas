@@ -1,0 +1,51 @@
+# ---- Datos e imágenes (NO versionar binarios pesados) ----
+data/raw/**
+data/processed/**
+data/**/*.png
+data/**/*.jpg
+data/**/*.jpeg
+data/**/*.webp
+data/**/*.zip
+!data/**/.gitkeep
+!data/**/README.md
+
+# ---- Artefactos de entrenamiento ----
+ml/runs/
+ml/outputs/
+*.pt
+*.pth
+*.ckpt
+# El .onnx final SÍ se versiona, vive en web/public/models/
+!web/public/models/*.onnx
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Node / Next.js ----
+node_modules/
+.next/
+out/
+build/
+.vercel/
+*.tsbuildinfo
+
+# ---- Entorno y secretos ----
+.env
+.env*.local
+!.env.example
+
+# ---- Sistema operativo / editores ----
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json

@@ -1,0 +1,25 @@
+# Deep learning
+torch>=2.2
+torchvision>=0.17
+
+# Imagen y numérico
+numpy>=1.26,<2.3
+opencv-python>=4.9
+Pillow>=10.2
+
+# Métricas y gráficas
+scikit-learn>=1.4
+matplotlib>=3.8
+
+# Utilidades
+PyYAML>=6.0
+tqdm>=4.66
+pandas>=2.2
+
+# Export y verificación de ONNX
+onnx>=1.16
+onnxruntime>=1.17
+onnxscript>=0.1
+
+# Tests
+pytest>=8.0
