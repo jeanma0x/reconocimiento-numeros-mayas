@@ -120,16 +120,20 @@ de dibujo, sino por la **estructura**. Es un punto importante y hay que decirlo 
 El modelo se juega el sábado contra un marcador en una hoja. El dataset sintético solo acerca;
 las fotos reales son las que cierran la brecha.
 
-**Protocolo de captura — cada integrante:**
+**El protocolo completo, con el formato exacto y la estructura de carpetas, está en
+[`INSTRUCCIONES-FOTOS.md`](INSTRUCCIONES-FOTOS.md).** Resumen:
 
-1. Escribe los 19 números **dos veces**: una con marcador grueso, otra con lapicero o lápiz.
-2. Fotografía cada uno con su celular, variando: distancia, ángulo, luz de día y luz artificial,
-   fondo de hoja blanca y de cuaderno.
-3. Añade 10 negativos de su propia mano: un cero maya, un 20, un 25, un 6-puntos, un 4-barras,
-   puntos debajo de barras, dos números en la misma hoja, un dibujo cualquiera, un número
-   arábigo, una hoja en blanco.
+1. Los 19 números **dos veces**: una ronda con marcador grueso, otra con lapicero o lápiz.
+2. 12 repeticiones con luz y fondo distintos.
+3. 15 negativos de su propia mano, repartidos en cinco subcategorías.
+4. **Una mano extra:** cada integrante consigue a una persona más —familiar, pareja, amigo— que
+   escriba los 19 números una vez.
 
-Son unas 48 fotos por persona, ≈ 20 minutos de trabajo. **Meta: ≥ 400 imágenes reales.**
+Son unas 65 fotos propias más 19 de la persona extra, ≈ 30 minutos. Somos cuatro, así que el
+paso 4 no es opcional: sin él el modelo ve 4 letras distintas, con él ve 8. Es la mejora más
+grande por minuto invertido de todo el proyecto.
+
+**Meta: ≈ 336 imágenes reales de 8 manos distintas. Fecha límite: jueves 19 a mediodía.**
 
 **Importante:** cada quien escribe con su letra natural. No hay que "escribir bonito" — la
 variabilidad es exactamente lo que necesitamos.
@@ -147,17 +151,20 @@ conjuntos distintos. Nuestro esquema:
 
 | Conjunto | Composición | Para qué |
 |---|---|---|
-| **Entrenamiento** | Sintético (semillas 0–N) + fotos reales de 4 integrantes | Ajustar pesos |
-| **Validación** | Sintético con semillas **disjuntas** + fotos reales de esos mismos 4 integrantes, separadas por toma | Early stopping, elección de modelo, temperatura y umbrales |
-| **Prueba** | **Fotos del 5.º integrante, que el modelo nunca vio** + un lote de sintético con semillas nuevas | Reportar el número final. Se toca **una sola vez** |
+| **Entrenamiento** | Sintético (semillas 0–N) + fotos de José Julián, Jorge Luis y Jean Marco + las manos extra que consigan ellos tres | Ajustar pesos |
+| **Validación** | Sintético con semillas **disjuntas** + fotos de esos mismos tres, separadas por toma | Early stopping, elección de modelo, temperatura y umbrales |
+| **Prueba** | **Fotos de Imri y de su mano extra, que el modelo nunca vio** + un lote de sintético con semillas nuevas | Reportar el número final. Se toca **una sola vez** |
+
+> Se aparta a Imri porque es quien no entrena el modelo: así nadie que ajusta hiperparámetros ha
+> visto nunca esa letra, ni siquiera de reojo. Son dos manos desconocidas en prueba — la suya y
+> la de su persona extra.
 
 **Reglas que lo garantizan:**
 
 1. **Agrupación por semilla.** Todas las variantes que salen de una misma semilla del generador
    forman un grupo y van completas al mismo split. Nunca se parte un grupo.
 2. **Agrupación por toma.** Si de una misma hoja se tomaron tres fotos, las tres van al mismo split.
-3. **Leave-one-person-out.** El conjunto de prueba es la letra de alguien que el modelo no vio
-   nunca. Es lo más parecido a lo que pasará con el docente, y es un argumento fuerte para la
+3. **Leave-one-person-out.** El conjunto de prueba son letras que el modelo no vio nunca. Es lo más parecido a lo que pasará con el docente, y es un argumento fuerte para la
    presentación: *"nuestro 94 % de prueba es contra una mano desconocida, no contra nuestras
    propias fotos"*.
 4. **Deduplicado por hash.** `sha256` de cada archivo en `manifest.csv`; el split falla si detecta
@@ -194,9 +201,9 @@ coincida y que ningún grupo esté partido entre splits. **Es un check obligator
 ## Criterios de aceptación del dataset
 
 - [ ] ≥ 800 sintéticas por clase válida, ≥ 10 000 negativos
-- [ ] ≥ 400 imágenes reales, de 5 manos distintas
+- [ ] ≥ 300 imágenes reales, de al menos 7 manos distintas
 - [ ] Todas las subcategorías de prioridad alta con ≥ 150 ejemplos
-- [ ] Prueba = fotos de un integrante excluido del entrenamiento
+- [ ] Prueba = fotos de Imri y de su mano extra, excluidas del entrenamiento
 - [ ] `maya.dataset --verificar` pasa sin advertencias
 - [ ] Una hoja de contacto (grilla de muestras) por clase, revisada a ojo por dos personas
       distintas. Una etiqueta mal puesta envenena el entrenamiento en silencio

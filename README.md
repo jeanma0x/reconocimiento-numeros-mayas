@@ -41,6 +41,8 @@ cd ../web && npm install && npm run dev
 
 | Doc | Para qué |
 |---|---|
+| [`docs/EMPIEZA-AQUI.md`](docs/EMPIEZA-AQUI.md) | **Si es tu primera vez: empezá aquí.** Incluye cómo configurar tu agente. |
+| [`docs/INSTRUCCIONES-FOTOS.md`](docs/INSTRUCCIONES-FOTOS.md) | **Tarea de todos.** Cómo escribir, fotografiar y entregar las imágenes. |
 | [`docs/00-CONTEXTO.md`](docs/00-CONTEXTO.md) | Enunciado, restricciones y rúbrica. Lo que nos van a calificar. |
 | [`docs/01-ARQUITECTURA.md`](docs/01-ARQUITECTURA.md) | Arquitectura del sistema completo. |
 | [`docs/02-STACK.md`](docs/02-STACK.md) | Lenguajes y librerías, con la justificación de cada uno. |
@@ -57,12 +59,22 @@ cd ../web && npm install && npm run dev
 
 ## Equipo
 
-| Nombre | Responsabilidad principal | GitHub |
-|---|---|---|
-| José Julián Amado García | Coordinación / arquitectura | _(por llenar)_ |
-| _(por llenar)_ | Dataset | |
-| _(por llenar)_ | Modelo | |
-| _(por llenar)_ | Frontend | |
-| _(por llenar)_ | QA y presentación | |
+| Integrante | Responsabilidad | Es dueño de | GitHub |
+|---|---|---|---|
+| **José Julián Amado García** | Coordinador general · Modelo | `ml/`: entrenamiento, calibración, export a ONNX. Decide cuándo se congela el modelo | _(pendiente)_ |
+| **Jean Marco Portillo Ordoñez** | Segundo coordinador · Inferencia, despliegue y QA | `web/lib/`: `preprocess.ts`, test de paridad, Vercel y Neon. Checklist de QA y simulacros | _(pendiente)_ |
+| **Jorge Luis de la Rosa Zamora** | Dataset | `synth.py`, campaña de fotos, manifiesto, splits y revisión del etiquetado. Análisis de errores | _(pendiente)_ |
+| **Imri Gabriel Contreras Bautista** | Interfaz y presentación | `web/`: interfaz, cámara, lienzo, dashboard. Diapositivas y material visual | _(pendiente)_ |
 
-> Todos los integrantes deben conocer **todo** el trabajo: el docente elige quién responde cada pregunta.
+Jean Marco cubre a José Julián como coordinador: si uno no está, el otro decide.
+
+> **Todos deben conocer todo el trabajo, no solo su parte.** El docente elige quién responde
+> cada pregunta, y eso vale 30% de la nota. Ver [`docs/09-PREGUNTAS-DOCENTE.md`](docs/09-PREGUNTAS-DOCENTE.md).
+
+## ¿Primera vez acá?
+
+👉 Empezá por **[`docs/EMPIEZA-AQUI.md`](docs/EMPIEZA-AQUI.md)** — qué es esto, qué leer y en
+qué orden, y cómo configurar tu agente para que trabaje con el contexto correcto.
+
+👉 Y hacé tus fotos: **[`docs/INSTRUCCIONES-FOTOS.md`](docs/INSTRUCCIONES-FOTOS.md)**, unos 30
+minutos, fecha límite **jueves 19 a mediodía**.

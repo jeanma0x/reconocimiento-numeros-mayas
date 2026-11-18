@@ -3,7 +3,7 @@
 > **Este es el archivo más importante del repositorio.** Se lee al empezar cada sesión de trabajo
 > y se actualiza al terminarla. Si está desactualizado, la siguiente sesión empieza a ciegas.
 
-**Última actualización:** 2026-11-17, 22:30 (hora de Guatemala)
+**Última actualización:** 2026-11-17, 23:15 (hora de Guatemala)
 **Actualizado por:** sesión de cimientos (Claude + José Julián)
 
 ---
@@ -34,16 +34,24 @@ imagen en el dataset.**
 - [x] Contratos de los módulos de `ml/src/maya/` definidos en los stubs
 - [x] `requirements.txt` y `configs/default.yaml`
 - [x] Decisiones técnicas registradas en `DECISIONES.md` (ADR-001 a ADR-009)
-- [x] Repositorio creado: https://github.com/josejulianamadogarcia10-lab/reconocimiento-numeros-mayas (privado)
+- [x] Repositorio **público**: https://github.com/josejulianamadogarcia10-lab/reconocimiento-numeros-mayas
+- [x] Roles asignados a los cuatro integrantes (ver `README.md` y `08-PLAN-DE-ACCION.md`)
+- [x] `docs/EMPIEZA-AQUI.md`: onboarding del equipo y configuración de su agente
+- [x] `docs/INSTRUCCIONES-FOTOS.md`: protocolo completo de captura
+- [x] Estructura de carpetas de captura creada en `data/raw/real/` para los cuatro
 
 ## Siguiente paso concreto
 
-**Lo primero, esta misma noche, y no es código:**
+**Lo primero, y no es código:**
 
-1. **Asignar los roles** de `08-PLAN-DE-ACCION.md` y anotarlos en `README.md`.
-2. **Arrancar la campaña de fotos.** Cada integrante: los 19 números a mano en dos estilos
-   (marcador y lapicero) más 10 negativos. Unos 20 minutos por persona. Es lo único que depende
-   del tiempo de cinco personas y por eso es lo que más riesgo tiene de llegar tarde.
+1. **Campaña de fotos.** Los cuatro, siguiendo `INSTRUCCIONES-FOTOS.md`. Unos 30 minutos cada
+   uno, **fecha límite jueves 19 a mediodía**. Incluye conseguir una mano extra por persona.
+   Es lo único que depende del tiempo de cuatro personas y por eso es lo que más riesgo tiene
+   de llegar tarde.
+2. **Carpeta compartida de Drive**, con la estructura de `data/raw/real/`, y pegar el enlace en
+   `data/README.md`.
+3. **Usuarios de GitHub** de Jorge, Imri y Jean Marco, para agregarlos como colaboradores
+   (el repo es público, pero para pushear hace falta invitación).
 
 **Después, el miércoles, por orden de dependencia:**
 
@@ -59,12 +67,12 @@ imagen en el dataset.**
 
 | Riesgo | Estado | Responsable |
 |---|---|---|
-| Fotos reales insuficientes para el jueves | 🔴 Abierto, 0 de 400 | Todos |
-| Roles sin asignar | 🔴 Abierto | R1 |
-| Equipo sin invitar al repositorio (Settings → Collaborators) | 🟡 Pendiente | R1 |
-| Proyecto de Vercel sin crear | 🟡 Pendiente | R4 |
-| Proyecto de Neon sin crear | 🟡 Pendiente | R4 |
-| Divergencia entre `preprocess.py` y `preprocess.ts` | 🟢 Mitigado por diseño (V1 trivial + test de paridad) | R4 |
+| Fotos reales insuficientes para el jueves | 🔴 Abierto, 0 de ~336 | Todos |
+| Carpeta de Drive sin crear | 🔴 Abierto | José Julián |
+| Equipo sin invitar al repo (faltan sus usuarios de GitHub) | 🟡 Pendiente | José Julián |
+| Proyecto de Vercel sin crear | 🟡 Pendiente | Jean Marco |
+| Proyecto de Neon sin crear | 🟡 Pendiente | Jean Marco |
+| Divergencia entre `preprocess.py` y `preprocess.ts` | 🟢 Mitigado por diseño (V1 trivial + test de paridad) | Jean Marco |
 
 ## Métricas actuales
 
@@ -89,5 +97,10 @@ Se revisó el PDF del proyecto y el notebook de referencia del instructor
 y las decisiones técnicas principales ya tomadas y justificadas. Hallazgo relevante del notebook:
 su pipeline de preprocesamiento conserva únicamente el contorno más grande, lo cual **no sirve**
 para números mayas, que son varias manchas separadas; hay que adaptarlo (ver `04-MODELO.md`).
-Repositorio privado creado en GitHub bajo la cuenta `josejulianamadogarcia10-lab`.
-Siguiente sesión: invitar al equipo, asignar roles y arrancar la campaña de fotos.
+Repositorio creado y publicado bajo la cuenta `josejulianamadogarcia10-lab`. Equipo definido:
+cuatro integrantes, José Julián como coordinador y Jean Marco como segundo coordinador. Roles
+repartidos y escritos en `README.md` y `08-PLAN-DE-ACCION.md`. Como somos cuatro y no cinco, el
+protocolo de captura ahora pide una **mano extra por persona** (alguien externo que escriba los
+19 números): así el dataset pasa de 4 a 8 letras distintas, y el conjunto de prueba se arma con
+las fotos de Imri y su mano extra, que nadie que entrena el modelo habrá visto.
+Siguiente sesión: fotos, carpeta de Drive e invitaciones al repo.

@@ -7,9 +7,9 @@ reconocimiento. Agotado el tiempo, se da por finalizada la participación.
 
 | Bloque | Minutos | Quién |
 |---|---:|---|
-| Exposición | 14 | Todos, rotando |
-| Demostración funcional | 4 | R3 |
-| Pruebas del docente | ~6 | R1 opera, no toca nada más |
+| Exposición | 14 | Los cuatro, rotando |
+| Demostración funcional | 4 | Imri |
+| Pruebas del docente | ~6 | José Julián opera, nadie más toca la laptop |
 | Preguntas | ~6 | El docente elige quién responde |
 
 **Ensayar para 14 minutos de exposición, no para 20.** Pasarse de tiempo significa que las
@@ -19,22 +19,22 @@ preguntas y las pruebas quedan apretadas, y entre las dos valen el 40% de la not
 
 | # | Diapositiva | Qué se dice | Quién |
 |---|---|---|---|
-| 1 | Portada | Título, integrantes, curso | R5 |
-| 2 | El problema | Reconocer 1–19 y rechazar todo lo demás. La tabla barras/puntos: el sistema maya es `5·barras + puntos` | R5 |
-| 3 | Por qué no es trivial | Un 13 y un 14 difieren en un punto. Trazo a mano, fondos, luz, perspectiva | R5 |
-| 4 | Arquitectura | El diagrama de anillos. **Modelo en el navegador: funciona sin internet** | R4 |
-| 5 | Dataset | Las tres fuentes. Ejemplos sintéticos y reales lado a lado | R2 |
-| 6 | Los negativos | Grilla de `casi_valido`. **Es la diapositiva que distingue el proyecto**: muestra que pensamos la frontera del rechazo, no solo las clases | R2 |
-| 7 | Splits honestos | Agrupación por semilla y por toma; prueba = una mano nunca vista | R2 |
-| 8 | Preprocesamiento | Los pasos, con una foto real atravesándolos. Por qué no servía quedarse con el contorno más grande | R1 |
-| 9 | La red | El diagrama de capas, el conteo de parámetros, las tres cabezas y por qué | R1 |
-| 10 | Entrenamiento | Dos etapas, curvas de pérdida, early stopping | R1 |
-| 11 | Rechazo | Las cuatro capas y la curva de utilidad contra el umbral | R1 |
-| 12 | Resultados | Exactitud global, **exactitud en fotos reales de mano desconocida**, matriz de confusión | R5 |
-| 13 | Comparación | CNN propia contra transfer learning: exactitud, tamaño, latencia. Cuál elegimos y por qué | R1 |
-| 14 | Análisis de errores | El caso elegido, la causa, la corrección y el antes/después medido | R5 |
-| 15 | Limitaciones | Honestas y concretas. Qué haríamos con más tiempo | R5 |
-| 16 | **Demo** | En vivo | R3 |
+| 1 | Portada | Título, integrantes, curso | Imri |
+| 2 | El problema | Reconocer 1–19 y rechazar todo lo demás. La tabla barras/puntos: el sistema maya es `5·barras + puntos` | Imri |
+| 3 | Por qué no es trivial | Un 13 y un 14 difieren en un punto. Trazo a mano, fondos, luz, perspectiva | Imri |
+| 4 | Arquitectura | El diagrama de anillos. **Modelo en el navegador: funciona sin internet** | Jean Marco |
+| 5 | Dataset | Las tres fuentes. Ejemplos sintéticos y reales lado a lado | Jorge Luis |
+| 6 | Los negativos | Grilla de `casi_valido`. **Es la diapositiva que distingue el proyecto**: muestra que pensamos la frontera del rechazo, no solo las clases | Jorge Luis |
+| 7 | Splits honestos | Agrupación por semilla y por toma; prueba = una mano nunca vista | Jorge Luis |
+| 8 | Preprocesamiento | Los pasos, con una foto real atravesándolos. Por qué no servía quedarse con el contorno más grande | Jean Marco |
+| 9 | La red | El diagrama de capas, el conteo de parámetros, las tres cabezas y por qué | José Julián |
+| 10 | Entrenamiento | Dos etapas, curvas de pérdida, early stopping | José Julián |
+| 11 | Rechazo | Las cuatro capas y la curva de utilidad contra el umbral | José Julián |
+| 12 | Resultados | Exactitud global, **exactitud en fotos reales de mano desconocida**, matriz de confusión | Jorge Luis |
+| 13 | Comparación | CNN propia contra transfer learning: exactitud, tamaño, latencia. Cuál elegimos y por qué | José Julián |
+| 14 | Análisis de errores | El caso elegido, la causa, la corrección y el antes/después medido | Jean Marco |
+| 15 | Limitaciones | Honestas y concretas. Qué haríamos con más tiempo | Jean Marco |
+| 16 | **Demo** | En vivo | Imri |
 
 ## Guion de la demostración
 
@@ -71,7 +71,11 @@ que se van a usar, cargadas y listas.
 
 ## Reparto de la voz
 
-Todos hablan. No porque quede bonito, sino porque el docente elige quién responde cada pregunta:
-si alguien no abrió la boca en 14 minutos, es a quien le va a preguntar. Rotar cada 2 o 3
-diapositivas y que cada quien exponga **la parte que no construyó**, que es exactamente el
-ejercicio que hay que hacer el viernes.
+Cuatro diapositivas cada uno. No porque quede bonito, sino porque el docente elige quién
+responde cada pregunta: si alguien no abrió la boca en 14 minutos, es a quien le va a preguntar.
+
+El reparto de arriba está hecho a propósito para que **cada quien exponga al menos una parte que
+no construyó**: Imri abre con el problema aunque hizo la interfaz, Jorge presenta los resultados
+aunque hizo el dataset, Jean Marco explica el preprocesamiento y el análisis de errores. Es el
+mismo ejercicio de la ronda de preguntas cruzadas del viernes, y es lo que hace que las
+preguntas del docente —el 30% de la nota— no dependan de a quién señale.

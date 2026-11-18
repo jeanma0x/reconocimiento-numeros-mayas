@@ -1,13 +1,19 @@
 # ---- Datos e imágenes (NO versionar binarios pesados) ----
+# Se ignora el contenido, pero se conservan las carpetas vacías (.gitkeep) y los
+# README: así al clonar ya queda lista la estructura de captura de data/raw/real/.
+# El orden importa: git no puede re-incluir un archivo si su carpeta está excluida,
+# por eso las dos líneas que re-incluyen directorios van antes que las de archivos.
 data/raw/**
 data/processed/**
+!data/raw/**/
+!data/processed/**/
+!data/**/.gitkeep
+!data/**/README.md
 data/**/*.png
 data/**/*.jpg
 data/**/*.jpeg
 data/**/*.webp
 data/**/*.zip
-!data/**/.gitkeep
-!data/**/README.md
 
 # ---- Artefactos de entrenamiento ----
 ml/runs/

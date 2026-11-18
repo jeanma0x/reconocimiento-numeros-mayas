@@ -34,16 +34,12 @@ cd ml && python -m maya.dataset --sincronizar --verificar
 
 ## Tu tarea de captura
 
-Cada integrante, unos 20 minutos:
+👉 **Las instrucciones completas están en [`../docs/INSTRUCCIONES-FOTOS.md`](../docs/INSTRUCCIONES-FOTOS.md).**
 
-1. Escribe los **19 números dos veces**: una con marcador grueso, otra con lapicero o lápiz.
-2. Fotografía cada uno variando distancia, ángulo, luz (de día y artificial) y fondo
-   (hoja blanca y cuaderno).
-3. Agrega **10 negativos** de tu propia mano: un cero maya, un 20, un 25, un 6-puntos, un
-   4-barras, puntos debajo de barras, dos números en la misma hoja, un dibujo cualquiera, un
-   número arábigo y una hoja en blanco.
+En resumen: los 19 números dos veces (marcador y lapicero), 12 repeticiones con luz o fondo
+distinto, 15 negativos, y una persona extra que escriba los 19. Unas 30 minutos.
+**Fecha límite: jueves 19 a mediodía.**
 
-**Escribe con tu letra natural.** No hay que escribir bonito: la variabilidad es exactamente lo
-que necesita el modelo.
-
-Detalle completo en `../docs/03-DATASET.md`.
+Las carpetas de cada quien ya están creadas en `raw/real/<nombre>/`: una por número
+(`maya_01` … `maya_19`) y cinco de negativos. Meter cada foto en la carpeta que le toca es todo
+el etiquetado que hay que hacer.
