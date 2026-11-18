@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía visual · Números mayas a mano</title>
+<style>
+  :root{
+    --tinta:#1c1917; --papel:#faf8f5; --card:#ffffff; --linea:#e7e2db;
+    --verde:#1f7a4d; --verde-suave:#eaf5ef;
+    --rojo:#b42318; --rojo-suave:#fdf0ef;
+    --ambar:#9a6a00; --ambar-suave:#fdf6e3;
+    --gris:#6b6459;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--papel); color:var(--tinta);
+    font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:32px 20px 80px}
+  header{border-bottom:3px solid var(--tinta);padding-bottom:20px;margin-bottom:36px}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gris);font-weight:600}
+  h1{font-size:clamp(28px,5vw,42px);line-height:1.12;margin:10px 0 12px;letter-spacing:-.02em}
+  .lead{font-size:17px;color:var(--gris);max-width:62ch;margin:0}
+  .alerta{
+    margin-top:18px;background:var(--ambar-suave);border-left:4px solid var(--ambar);
+    padding:12px 16px;border-radius:0 8px 8px 0;font-size:15px
+  }
+  .alerta b{color:var(--ambar)}
+  h2{font-size:24px;margin:52px 0 6px;letter-spacing:-.01em;scroll-margin-top:20px}
+  h2 .num{color:var(--verde);font-variant-numeric:tabular-nums;margin-right:10px}
+  .sub{color:var(--gris);margin:0 0 24px;max-width:68ch}
+  h3{font-size:17px;margin:32px 0 12px}
+
+  .regla{
+    display:grid;grid-template-columns:1fr auto;gap:28px;align-items:center;
+    background:var(--card);border:1px solid var(--linea);border-radius:14px;padding:24px 26px
+  }
+  .regla ul{margin:0;padding-left:20px}
+  .regla li{margin:7px 0}
+  .formula{
+    margin-top:16px;background:var(--verde-suave);color:var(--verde);font-weight:700;
+    padding:10px 14px;border-radius:9px;display:inline-block;font-size:16px
+  }
+  .ejemplo-grande{text-align:center}
+  .ejemplo-grande .cifra{font-size:46px;font-weight:800;letter-spacing:-.03em;line-height:1}
+  .ejemplo-grande .desc{font-size:13px;color:var(--gris);margin-top:6px}
+
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(148px,1fr))}
+  .card{
+    background:var(--card);border:1px solid var(--linea);border-radius:12px;
+    padding:14px 10px 12px;text-align:center
+  }
+  .card .cifra{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .card .comp{font-size:12.5px;color:var(--gris);margin-top:8px}
+  .card svg{display:block;margin:8px auto 2px}
+
+  .grid-mal{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+  .mal{
+    background:var(--card);border:1px solid var(--linea);border-radius:12px;
+    padding:14px;display:flex;gap:14px;align-items:center
+  }
+  .mal .n{
+    flex:0 0 26px;height:26px;border-radius:50%;background:var(--rojo-suave);color:var(--rojo);
+    font-weight:800;font-size:13px;display:grid;place-items:center
+  }
+  .mal .txt{flex:1;min-width:0}
+  .mal .t{font-weight:700;font-size:14.5px;line-height:1.3}
+  .mal .p{font-size:12.5px;color:var(--gris);margin-top:3px;line-height:1.45}
+  .mal .fig{flex:0 0 72px}
+
+  .doscol{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .panel{border-radius:12px;padding:18px 20px;border:1px solid var(--linea);background:var(--card)}
+  .panel.si{background:var(--verde-suave);border-color:#cfe8da}
+  .panel.no{background:var(--rojo-suave);border-color:#f6d9d6}
+  .panel h4{margin:0 0 10px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .panel.si h4{color:var(--verde)} .panel.no h4{color:var(--rojo)}
+  .panel ul{margin:0;padding-left:19px;font-size:14.5px}
+  .panel li{margin:6px 0}
+
+  .encuadre{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
+  .enc{text-align:center}
+  .enc .marco{border:2px dashed var(--linea);border-radius:10px;background:#fff;overflow:hidden}
+  .enc.ok .marco{border-style:solid;border-color:var(--verde)}
+  .enc .et{font-size:13px;margin-top:7px;font-weight:650}
+  .enc.ok .et{color:var(--verde)} .enc:not(.ok) .et{color:var(--rojo)}
+
+  table{width:100%;border-collapse:collapse;font-size:14.5px;background:var(--card);
+    border:1px solid var(--linea);border-radius:12px;overflow:hidden}
+  th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--linea);vertical-align:top}
+  th{background:#f4f1ec;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--gris)}
+  tr:last-child td{border-bottom:none}
+
+  .check{background:var(--card);border:1px solid var(--linea);border-radius:12px;padding:8px 20px}
+  .check label{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--linea);cursor:pointer}
+  .check label:last-child{border-bottom:none}
+  .check input{margin-top:3px;width:17px;height:17px;accent-color:var(--verde);flex:0 0 auto}
+  .check span{font-size:15px}
+  .check input:checked + span{color:var(--gris);text-decoration:line-through}
+
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--linea);font-size:13.5px;color:var(--gris)}
+  .nota{font-size:14px;color:var(--gris);background:var(--card);border:1px solid var(--linea);
+    border-left:4px solid var(--verde);border-radius:0 10px 10px 0;padding:14px 18px;margin:18px 0}
+
+  @media (max-width:700px){
+    .regla{grid-template-columns:1fr}
+    .doscol{grid-template-columns:1fr}
+    .encuadre{grid-template-columns:1fr}
+  }
+  @media print{
+    body{background:#fff}
+    .wrap{max-width:none;padding:0}
+    .card,.mal,.panel,.check,table,.regla{box-shadow:none}
+    h2{page-break-after:avoid} .grid,.grid-mal{page-break-inside:auto}
+    .card,.mal{page-break-inside:avoid}
+    .noprint{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">Proyecto 02 · Inteligencia Artificial · UVG Campus Sur</div>
+  <h1>Cómo escribir y fotografiar<br>los números mayas</h1>
+  <p class="lead">Esta es la referencia para la tarea de captura. Escribí cada número tal como se ve
+  aquí, fotografiálo siguiendo las reglas del final y subilo a tu carpeta. Son unos 30 minutos.</p>
+  <div class="alerta"><b>Fecha límite: jueves 19 a mediodía.</b> Si un número se escribe mal, el
+  modelo aprende mal y nadie se da cuenta hasta el sábado. Revisá la forma antes de fotografiar.</div>
+</header>
+
+<h2><span class="num">1</span>La regla, en una línea</h2>
+<div class="regla">
+  <div>
+    <ul>
+      <li>El <b>punto</b> vale <b>1</b>. La <b>barra</b> vale <b>5</b>.</li>
+      <li>Las <b>barras van abajo</b>, horizontales, apiladas una sobre otra.</li>
+      <li>Los <b>puntos van arriba</b>, en una sola fila.</li>
+      <li>Máximo <b>4 puntos</b> (5 ya serían una barra) y máximo <b>3 barras</b> (4 ya serían 20).</li>
+    </ul>
+    <div class="formula">valor = 5 × barras + puntos</div>
+  </div>
+  <div class="ejemplo-grande">
+    <div class="cifra">13</div>
+    <div id="ej-grande"></div>
+    <div class="desc">2 barras (10) + 3 puntos (3)</div>
+  </div>
+</div>
+
+<h2><span class="num">2</span>Los 19 números</h2>
+<p class="sub">Escribilos en este orden, del 1 al 19. Una ronda con <b>marcador grueso</b> y otra
+con <b>lapicero o lápiz</b>. Un número por hoja, o uno por cuarto de hoja bien separados.</p>
+<div class="grid" id="grid-19"></div>
+
+<h2><span class="num">3</span>Así se ve bien escrito a mano</h2>
+<p class="sub">Los de arriba están dibujados por computadora. Tu letra no tiene que verse así, y de
+hecho <b>es mejor que no</b>. Trazo chueco, puntos de distinto tamaño, barras desiguales: todo eso
+es lo que necesitamos. Un dataset de números perfectos produce un modelo que solo reconoce números
+perfectos, y el sábado el docente no va a escribir con regla.</p>
+<div class="grid" id="grid-mano"></div>
+
+<h2><span class="num">4</span>Errores que arruinan el dato</h2>
+<div class="doscol">
+  <div class="panel no">
+    <h4>✕ No hagas esto</h4>
+    <ul>
+      <li>Puntos <b>abajo</b> de las barras. Eso es un caso inválido, no el número.</li>
+      <li>Barras <b>verticales</b>. Siempre horizontales.</li>
+      <li>Escribir el número arábigo (13, 7…) <b>en la misma hoja</b>. Si sale en la foto, envenena
+      el dato: los dígitos arábigos son justo una de las cosas que el modelo debe rechazar.</li>
+      <li>Más de un número por hoja.</li>
+      <li>Barras de largo tan distinto que parezcan otra cosa.</li>
+    </ul>
+  </div>
+  <div class="panel si">
+    <h4>✓ Sí hacé esto</h4>
+    <ul>
+      <li>Escribí con tu letra natural, sin esforzarte.</li>
+      <li>Si querés anotar qué número es, escribilo <b>al reverso</b> de la hoja.</li>
+      <li>Variá el grosor del trazo entre las dos rondas.</li>
+      <li>Dejá que los puntos queden algo desparejos. Así se escribe de verdad.</li>
+      <li>Centrá el número en la hoja, con margen alrededor.</li>
+    </ul>
+  </div>
+</div>
+
+<h2><span class="num">5</span>Las 15 fotos de "no válidos"</h2>
+<p class="sub">El modelo también tiene que saber decir <b>"esto no es un número maya del 1 al 19"</b>,
+y para eso necesita ver ejemplos. Escribí y fotografiá estos quince, <b>uno por foto</b>. Los de la
+frontera —5 puntos, 4 barras, puntos abajo— son los más valiosos del dataset: sin ellos el modelo
+aceptaría cualquier combinación de puntos y barras como si fuera válida.</p>
+<div class="grid-mal" id="grid-invalidos"></div>
+
+<h2><span class="num">6</span>Cómo fotografiar</h2>
+<p class="sub">Una foto = un número. Que no se vea ningún otro número en el encuadre.</p>
+
+<h3>Encuadre</h3>
+<div class="encuadre" id="encuadres"></div>
+
+<h3>Variá entre fotos — esto es lo que hace útil al dataset</h3>
+<table>
+  <tr><th>Qué variar</th><th>Cómo</th></tr>
+  <tr><td><b>Luz</b></td><td>Unas con luz de día junto a la ventana, otras con el foco del cuarto,
+    alguna con la sombra de tu mano encima.</td></tr>
+  <tr><td><b>Ángulo</b></td><td>La mayoría de frente, y varias inclinadas 10–20°.</td></tr>
+  <tr><td><b>Distancia</b></td><td>Unas más cerca, otras más lejos.</td></tr>
+  <tr><td><b>Fondo</b></td><td>Hoja blanca, hoja de cuaderno rayada o cuadriculada, sobre una mesa
+    de madera.</td></tr>
+</table>
+
+<h3>Formato del archivo</h3>
+<div class="doscol">
+  <div class="panel si">
+    <h4>✓ Sirve</h4>
+    <ul>
+      <li>Foto normal del celular, JPG o PNG.</li>
+      <li>Resolución original, sin reducir.</li>
+      <li>Que se vea inclinada, con sombra o con el fondo del escritorio. Eso es bueno.</li>
+      <li>Enfocada. Si salió movida, repetila.</li>
+    </ul>
+  </div>
+  <div class="panel no">
+    <h4>✕ No sirve</h4>
+    <ul>
+      <li>Filtros, modo retrato, modo belleza, blanco y negro, "mejorar foto".</li>
+      <li>Apps de escáner (CamScanner, Adobe Scan, el escáner de Notas). Dejan la imagen demasiado
+      limpia y el modelo aprende algo que no va a ver el sábado.</li>
+      <li>PDF, capturas de pantalla, fotos de la pantalla de otro aparato.</li>
+      <li>Recortar o editar a mano.</li>
+      <li>Varias fotos del mismo número casi idénticas. Si no variaste nada, es relleno.</li>
+    </ul>
+  </div>
+</div>
+
+<h2><span class="num">7</span>La mano extra</h2>
+<div class="nota">
+  Conseguí <b>una persona más</b> —alguien de tu casa, tu pareja, un amigo— y pedile que escriba los
+  19 números una sola vez. Mostrale esta misma página.<br><br>
+  Somos cuatro. Con una mano extra cada uno, el modelo pasa de ver 4 letras distintas a ver 8. Es la
+  mejora más grande por minuto invertido de todo el proyecto, y el sábado el docente va a escribir
+  con <b>su</b> letra, que ninguno de nosotros ha visto nunca. Sus fotos van en una carpeta aparte.
+</div>
+
+<h2><span class="num">8</span>Dónde va cada foto</h2>
+<p class="sub">En la carpeta compartida hay una carpeta con tu nombre, ya con todo creado adentro.
+Meter cada foto donde corresponde <b>es todo el etiquetado</b>: no hace falta renombrar archivos.</p>
+<table>
+  <tr><th>Carpeta</th><th>Qué va adentro</th></tr>
+  <tr><td><code>maya_01</code> … <code>maya_19</code></td><td>Una carpeta por número. Las dos rondas
+    y las repeticiones del mismo número van todas juntas aquí.</td></tr>
+  <tr><td><code>no_valido/cero_maya</code></td><td>Fotos 1 y 2 de la sección 5.</td></tr>
+  <tr><td><code>no_valido/mayor_19</code></td><td>Fotos 3, 4 y 5.</td></tr>
+  <tr><td><code>no_valido/casi_valido</code></td><td>Fotos 6 a 11.</td></tr>
+  <tr><td><code>no_valido/multiples</code></td><td>Foto 12.</td></tr>
+  <tr><td><code>no_valido/otros</code></td><td>Fotos 13, 14 y 15.</td></tr>
+  <tr><td><code>extra_&lt;nombre&gt;</code></td><td>Los 19 de tu persona extra, con sus propias
+    subcarpetas por número.</td></tr>
+</table>
+<div class="nota">
+  <b>El truco para no enredarte:</b> tomá las fotos en orden del 1 al 19, subilas todas de una,
+  y después desde la computadora con el mouse arrastralas en orden a sus carpetas. Es mucho más
+  rápido que hacerlo desde el celular.
+</div>
+
+<h2><span class="num">9</span>Antes de dar por terminado</h2>
+<div class="check">
+  <label><input type="checkbox"><span>19 fotos con marcador grueso, una por número</span></label>
+  <label><input type="checkbox"><span>19 fotos con lapicero o lápiz</span></label>
+  <label><input type="checkbox"><span>12 fotos repetidas con otra luz u otro fondo</span></label>
+  <label><input type="checkbox"><span>15 fotos de "no válidos", en sus cinco subcarpetas</span></label>
+  <label><input type="checkbox"><span>19 fotos de la persona extra, en su carpeta</span></label>
+  <label><input type="checkbox"><span>Ninguna foto tiene un número arábigo escrito junto al número maya</span></label>
+  <label><input type="checkbox"><span>Ninguna foto tiene dos números mayas, salvo la de <code>multiples</code></span></label>
+  <label><input type="checkbox"><span>Cada foto está en la carpeta de su número</span></label>
+  <label><input type="checkbox"><span>Avisé en el grupo que terminé</span></label>
+</div>
+
+<footer>
+  Son unas <b>65 fotos tuyas</b> más 19 de la persona extra. Entre los cuatro: alrededor de
+  <b>336 imágenes de 8 manos distintas</b>. Con eso el modelo tiene con qué trabajar.<br>
+  <span class="noprint">Detalle completo en <code>docs/INSTRUCCIONES-FOTOS.md</code> del repositorio.
+  Esta página se puede imprimir (Ctrl/Cmd + P).</span>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  const NS = "http://www.w3.org/2000/svg";
+  const W = 130, H = 118;
+  const BAR_W = 92, BAR_H = 14, BAR_GAP = 9, BAR_R = 7;
+  const DOT_R = 8.5, DOT_GAP = 25, BLOQUE_GAP = 17;
+
+  // Altura que ocupa un glifo de (barras, puntos)
+  function alto(barras, puntos){
+    let h = 0;
+    if (puntos) h += 2 * DOT_R;
+    if (puntos && barras) h += BLOQUE_GAP;
+    if (barras) h += barras * BAR_H + (barras - 1) * BAR_GAP;
+    return h;
+  }
+
+  // Dibuja un glifo dentro de <g>, con su esquina superior en y0, centrado en cx
+  function pintar(g, barras, puntos, cx, y0, filtro){
+    const attrs = filtro ? ' filter="url(#' + filtro + ')"' : '';
+    let s = '';
+    let y = y0;
+    if (puntos){
+      const x0 = cx - (puntos - 1) * DOT_GAP / 2;
+      for (let i = 0; i < puntos; i++){
+        s += '<circle cx="' + (x0 + i * DOT_GAP) + '" cy="' + (y + DOT_R) + '" r="' + DOT_R + '"' + attrs + '/>';
+      }
+      y += 2 * DOT_R + (barras ? BLOQUE_GAP : 0);
+    }
+    for (let i = 0; i < barras; i++){
+      s += '<rect x="' + (cx - BAR_W / 2) + '" y="' + (y + i * (BAR_H + BAR_GAP)) +
+           '" width="' + BAR_W + '" height="' + BAR_H + '" rx="' + BAR_R + '"' + attrs + '/>';
+    }
+    g.push(s);
+  }
+
+  const FILTRO_MANO =
+    '<defs><filter id="mano" x="-20%" y="-20%" width="140%" height="140%">' +
+    '<feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="7" result="t"/>' +
+    '<feDisplacementMap in="SourceGraphic" in2="t" scale="4" xChannelSelector="R" yChannelSelector="G"/>' +
+    '</filter></defs>';
+
+  // SVG de un número maya 1..19
+  function glifo(valor, opts){
+    opts = opts || {};
+    const barras = Math.floor(valor / 5), puntos = valor % 5;
+    const escala = opts.escala || 1;
+    const w = W * escala, h = H * escala;
+    const g = [];
+    pintar(g, barras, puntos, W / 2, (H - alto(barras, puntos)) / 2, opts.mano ? 'mano' : null);
+    return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + W + ' ' + H + '" fill="#1c1917" aria-hidden="true">' +
+           (opts.mano ? FILTRO_MANO : '') + g.join('') + '</svg>';
+  }
+
+  // Concha del cero maya
+  function concha(cx, cy, k){
+    k = k || 1;
+    const rx = 42 * k, ry = 22 * k;
+    return '<g fill="none" stroke="#1c1917" stroke-width="' + (4.5 * k) + '" stroke-linecap="round">' +
+      '<path d="M ' + (cx - rx) + ' ' + cy + ' Q ' + cx + ' ' + (cy - ry * 1.9) + ' ' + (cx + rx) + ' ' + cy +
+      ' Q ' + cx + ' ' + (cy + ry * 1.9) + ' ' + (cx - rx) + ' ' + cy + ' Z"/>' +
+      '<path d="M ' + (cx - rx * 0.55) + ' ' + (cy + ry * 0.15) + ' Q ' + cx + ' ' + (cy - ry * 0.75) + ' ' + (cx + rx * 0.55) + ' ' + (cy + ry * 0.15) + '"/>' +
+      '<path d="M ' + (cx - rx * 0.3) + ' ' + (cy + ry * 0.6) + ' Q ' + cx + ' ' + (cy + ry * 0.05) + ' ' + (cx + rx * 0.3) + ' ' + (cy + ry * 0.6) + '"/>' +
+      '</g>';
+  }
+
+  // ---- 1. Ejemplo grande (13) ----
+  document.getElementById('ej-grande').innerHTML = glifo(13, {escala: 1.25});
+
+  // ---- 2. Los 19 ----
+  const grid = document.getElementById('grid-19');
+  let html = '';
+  for (let v = 1; v <= 19; v++){
+    const b = Math.floor(v / 5), p = v % 5;
+    const comp = (b ? b + (b === 1 ? ' barra' : ' barras') : '') +
+                 (b && p ? ' + ' : '') +
+                 (p ? p + (p === 1 ? ' punto' : ' puntos') : '');
+    html += '<div class="card"><div class="cifra">' + v + '</div>' + glifo(v) +
+            '<div class="comp">' + comp + '</div></div>';
+  }
+  grid.innerHTML = html;
+
+  // ---- 3. Escritos a mano ----
+  document.getElementById('grid-mano').innerHTML = [4, 9, 13, 17, 19].map(function(v){
+    return '<div class="card"><div class="cifra">' + v + '</div>' + glifo(v, {mano: true}) +
+           '<div class="comp">trazo irregular: así está bien</div></div>';
+  }).join('');
+
+  // ---- 5. Los 15 no válidos ----
+  function svgRaw(inner, h){
+    h = h || H;
+    return '<svg width="72" height="' + Math.round(72 * h / W) + '" viewBox="0 0 ' + W + ' ' + h +
+           '" fill="#1c1917" aria-hidden="true">' + inner + '</svg>';
+  }
+  // Dos niveles separados (notación posicional, 20 o más)
+  function posicional(arriba, abajo){
+    const h = 150, g1 = [], g2 = [];
+    pintar(g1, arriba.barras, arriba.puntos, W / 2, 14);
+    const altoArriba = alto(arriba.barras, arriba.puntos);
+    let s = g1.join('');
+    if (abajo.concha){
+      s += concha(W / 2, 14 + altoArriba + 44, 0.85);
+    } else {
+      pintar(g2, abajo.barras, abajo.puntos, W / 2, 14 + altoArriba + 34);
+      s += g2.join('');
+    }
+    return svgRaw(s, h);
+  }
+  function fila(puntos){
+    // separación adaptativa: con 5 o 6 puntos hay que apretarlos para que quepan
+    const gap = Math.min(DOT_GAP, (W - 2 * DOT_R - 10) / (puntos - 1));
+    const x0 = W / 2 - (puntos - 1) * gap / 2;
+    let s = '';
+    for (let i = 0; i < puntos; i++){
+      s += '<circle cx="' + (x0 + i * gap) + '" cy="' + (H / 2) + '" r="' + DOT_R + '"/>';
+    }
+    return svgRaw(s);
+  }
+  function pila(barras){
+    const g = []; pintar(g, barras, 0, W / 2, (H - alto(barras, 0)) / 2);
+    return svgRaw(g.join(''));
+  }
+  function invertido(barras, puntos){
+    const g = [];
+    const total = alto(barras, puntos), y0 = (H - total) / 2;
+    let s = '';
+    for (let i = 0; i < barras; i++){
+      s += '<rect x="' + (W / 2 - BAR_W / 2) + '" y="' + (y0 + i * (BAR_H + BAR_GAP)) +
+           '" width="' + BAR_W + '" height="' + BAR_H + '" rx="' + BAR_R + '"/>';
+    }
+    const yp = y0 + barras * BAR_H + (barras - 1) * BAR_GAP + BLOQUE_GAP + DOT_R;
+    const x0 = W / 2 - (puntos - 1) * DOT_GAP / 2;
+    for (let i = 0; i < puntos; i++) s += '<circle cx="' + (x0 + i * DOT_GAP) + '" cy="' + yp + '" r="' + DOT_R + '"/>';
+    return svgRaw(s);
+  }
+
+  const invalidos = [
+    {t:'El cero maya', p:'El glifo de concha: un óvalo acostado con curvas adentro. No se construye con puntos ni barras.', fig: svgRaw(concha(W/2, H/2))},
+    {t:'El cero maya, otra vez', p:'Dibujalo con tu propio estilo, un poco distinto al anterior.', fig: svgRaw(concha(W/2, H/2, 0.82))},
+    {t:'El 20', p:'Un punto arriba y, bien separado abajo, el glifo de cero. Notación posicional: fuera de rango.', fig: posicional({barras:0,puntos:1},{concha:true})},
+    {t:'El 25', p:'Un punto arriba y una barra abajo, en dos bloques claramente separados.', fig: posicional({barras:0,puntos:1},{barras:1,puntos:0})},
+    {t:'El 33', p:'Un punto arriba (vale 20) y abajo 2 barras con 3 puntos (vale 13).', fig: posicional({barras:0,puntos:1},{barras:2,puntos:3})},
+    {t:'5 puntos en fila', p:'No existe así: cinco unidades son una barra. Enseña dónde está la frontera.', fig: fila(5)},
+    {t:'6 puntos en fila', p:'Mismo caso, más exagerado.', fig: fila(6)},
+    {t:'4 barras apiladas', p:'Serían 20, que ya es posicional. Fuera de rango.', fig: pila(4)},
+    {t:'5 barras apiladas', p:'Mismo caso, más exagerado.', fig: pila(5)},
+    {t:'Puntos abajo de las barras', p:'La estructura invertida. El modelo debe notar que el orden importa.', fig: invertido(2, 3)},
+    {t:'Elementos dispersos', p:'Puntos y barras regados por la hoja, sin estructura de número.', fig: svgRaw('<circle cx="22" cy="24" r="8.5"/><rect x="60" y="14" width="56" height="13" rx="6"/><circle cx="104" cy="60" r="8.5"/><rect x="12" y="76" width="48" height="13" rx="6"/><circle cx="48" cy="52" r="8.5"/><circle cx="92" cy="98" r="8.5"/>')},
+    {t:'Dos números en la misma hoja', p:'Varias representaciones simultáneas están fuera de alcance: se rechazan.', fig: svgRaw('<circle cx="34" cy="20" r="7"/><circle cx="56" cy="20" r="7"/><rect x="12" y="36" width="66" height="11" rx="5"/><circle cx="96" cy="66" r="7"/><rect x="74" y="82" width="46" height="11" rx="5"/><rect x="74" y="99" width="46" height="11" rx="5"/>')},
+    {t:'Un número arábigo', p:'Escribí un 7, un 42, el que sea. Es otro sistema de numeración.', fig: svgRaw('<text x="65" y="78" font-size="68" font-weight="800" text-anchor="middle" font-family="system-ui,sans-serif">7</text>')},
+    {t:'Un dibujo cualquiera', p:'Una casita, una flor, un garabato. Lo que salga.', fig: svgRaw('<g fill="none" stroke="#1c1917" stroke-width="5" stroke-linejoin="round"><path d="M28 94 V52 L65 26 L102 52 V94 Z"/><path d="M52 94 V70 h26 v24"/></g>')},
+    {t:'Una hoja en blanco', p:'Sin nada escrito. El modelo no debe inventar un número donde no hay ninguno.', fig: svgRaw('<rect x="24" y="16" width="82" height="86" rx="4" fill="none" stroke="#d6d0c7" stroke-width="4"/>')}
+  ];
+  document.getElementById('grid-invalidos').innerHTML = invalidos.map(function(o, i){
+    return '<div class="mal"><div class="n">' + (i + 1) + '</div>' +
+           '<div class="txt"><div class="t">' + o.t + '</div><div class="p">' + o.p + '</div></div>' +
+           '<div class="fig">' + o.fig + '</div></div>';
+  }).join('');
+
+  // ---- 6. Encuadre ----
+  function marco(escala, corte){
+    const vb = '0 0 200 150';
+    const s = glifo(13).replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
+    const k = escala, tx = 100 - (W * k) / 2, ty = 75 - (H * k) / 2 + (corte ? 26 : 0);
+    return '<svg viewBox="' + vb + '" width="100%" fill="#1c1917" aria-hidden="true">' +
+           '<g transform="translate(' + tx + ',' + ty + ') scale(' + k + ')">' + s + '</g></svg>';
+  }
+  document.getElementById('encuadres').innerHTML =
+    '<div class="enc"><div class="marco">' + marco(0.42) + '</div><div class="et">✕ Muy lejos</div></div>' +
+    '<div class="enc ok"><div class="marco">' + marco(1.0) + '</div><div class="et">✓ Así</div></div>' +
+    '<div class="enc"><div class="marco">' + marco(1.55, true) + '</div><div class="et">✕ Se corta</div></div>';
+})();
+</script>
+</body>
+</html>

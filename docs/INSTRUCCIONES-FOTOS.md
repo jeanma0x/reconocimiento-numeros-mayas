@@ -18,6 +18,10 @@ literalmente, el 40% de la nota.
 
 ---
 
+> 📄 **Guía visual con los 19 números dibujados y los 15 inválidos:**
+> [`guia-visual-numeros-mayas.html`](guia-visual-numeros-mayas.html) — abrila en el navegador
+> (o usá el enlace que circuló por el grupo). Se puede imprimir y se ve bien en el celular.
+
 ## Paso 0 · Cómo se escribe un número maya (leer sí o sí)
 
 Dos símbolos: **el punto vale 1** y **la barra vale 5**.

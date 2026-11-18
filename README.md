@@ -43,6 +43,7 @@ cd ../web && npm install && npm run dev
 |---|---|
 | [`docs/EMPIEZA-AQUI.md`](docs/EMPIEZA-AQUI.md) | **Si es tu primera vez: empezá aquí.** Incluye cómo configurar tu agente. |
 | [`docs/INSTRUCCIONES-FOTOS.md`](docs/INSTRUCCIONES-FOTOS.md) | **Tarea de todos.** Cómo escribir, fotografiar y entregar las imágenes. |
+| [`docs/guia-visual-numeros-mayas.html`](docs/guia-visual-numeros-mayas.html) | Guía visual: los 19 números dibujados, los 15 inválidos y las reglas de encuadre. Abrir en el navegador. |
 | [`docs/00-CONTEXTO.md`](docs/00-CONTEXTO.md) | Enunciado, restricciones y rúbrica. Lo que nos van a calificar. |
 | [`docs/01-ARQUITECTURA.md`](docs/01-ARQUITECTURA.md) | Arquitectura del sistema completo. |
 | [`docs/02-STACK.md`](docs/02-STACK.md) | Lenguajes y librerías, con la justificación de cada uno. |

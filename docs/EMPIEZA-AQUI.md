@@ -42,7 +42,8 @@ Después, el documento de tu responsabilidad (lo encontrás en el [`README`](../
 ### 3. Hacer tus fotos
 
 👉 **[`INSTRUCCIONES-FOTOS.md`](INSTRUCCIONES-FOTOS.md)** — unos 30 minutos, con fecha límite el
-jueves 19 a mediodía. Es lo único que no se puede acelerar programando y de ello depende que el
+jueves 19 a mediodía. Acompañala con la **[guía visual](guia-visual-numeros-mayas.html)**, que trae
+los 19 números dibujados y los 15 casos inválidos; abrila en el navegador mientras escribís. Es lo único que no se puede acelerar programando y de ello depende que el
 modelo funcione el sábado. Hacelo antes que cualquier cosa de código.
 
 ### 4. Instalar lo que ocupes
