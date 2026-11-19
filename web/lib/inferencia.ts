@@ -72,6 +72,9 @@ export function softmax(logits: Float32Array | number[], T = 1): number[] {
   return e.map((v) => v / s);
 }
 
+/** Por defecto R3 solo cuenta si las cabezas auxiliares superan esta confianza. */
+export const TAU_AUX_POR_DEFECTO = 0.5;
+
 function argmax(a: Float32Array | number[]): number {
   let mejor = 0;
   for (let i = 1; i < a.length; i++) if (a[i] > a[mejor]) mejor = i;
@@ -83,7 +86,8 @@ function argmax(a: Float32Array | number[]): number {
  *
  *   R1  la red predice directamente la clase `no_valido`
  *   R2  la confianza calibrada no llega al umbral
- *   R3  inconsistencia: la clase no coincide con 5*barras + puntos
+ *   R3  inconsistencia: la clase no coincide con 5*barras + puntos, Y las cabezas
+ *       auxiliares están seguras de su desacuerdo
  *   R4  el margen entre la primera y la segunda opción es demasiado pequeño
  *
  * La aritmética de R3 solo VERIFICA la coherencia entre dos salidas neuronales;
@@ -102,14 +106,22 @@ export function decidir(
   const top2 = orden[1].i;
   const confianza = orden[0].prob;
 
-  const barras = argmax(logitsBarras);
-  const puntos = argmax(logitsPuntos);
+  const pb = softmax(logitsBarras);
+  const pp = softmax(logitsPuntos);
+  const barras = argmax(pb);
+  const puntos = argmax(pp);
+  // La menor de las dos manda: basta con que una cabeza dude para no fiarse de R3
+  const confianzaAux = Math.min(Math.max(...pb), Math.max(...pp));
+  const tauAux = umbrales.tau_aux ?? TAU_AUX_POR_DEFECTO;
   const valor = etiquetas.valores[top1] ?? null;
 
   let motivo: MotivoRechazo | null = null;
   if (top1 === etiquetas.indice_no_valido) motivo = "clase_no_valida";
   else if (confianza < umbrales.tau) motivo = "baja_confianza";
-  else if (valor !== 5 * barras + puntos) motivo = "inconsistencia";
+  // R3 solo cuenta si las cabezas auxiliares están SEGURAS de su desacuerdo. Si
+  // contaron con tan poca confianza como el resto, rechazar ahí tira un acierto,
+  // y un falso rechazo cuesta el cuádruple que un falso positivo (ADR-006).
+  else if (valor !== 5 * barras + puntos && confianzaAux >= tauAux) motivo = "inconsistencia";
   else if (confianza - orden[1].prob < umbrales.margen) motivo = "margen";
 
   return {
@@ -119,6 +131,7 @@ export function decidir(
     confianza,
     barras,
     puntos,
+    confianzaAux,
     probabilidades: p,
     top: orden.slice(0, 3).map(({ i, prob }) => ({
       etiqueta: etiquetas.etiquetas[i],

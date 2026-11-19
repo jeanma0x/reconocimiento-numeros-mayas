@@ -61,6 +61,7 @@ const casos = readdirSync(FIXTURES)
 
 let aceptadas = 0;
 let rechazadas = 0;
+let inconsistentesAceptadas = 0;
 const motivos = {};
 let msTotal = 0;
 let msPeor = 0;
@@ -91,10 +92,17 @@ for (const nombre of casos) {
       console.error(`\n  FALLO: ${nombre} aceptada con valor inválido ${r.valor}\n`);
       process.exit(1);
     }
-    if (r.valor !== 5 * r.barras + r.puntos) {
-      console.error(`\n  FALLO: ${nombre} aceptada pese a ser inconsistente (R3 no disparó)\n`);
+    // Aceptar algo inconsistente solo es legítimo si las cabezas auxiliares dudaban:
+    // esa es exactamente la condición de R3.
+    const tauAux = umbrales.tau_aux ?? 0.5;
+    if (r.valor !== 5 * r.barras + r.puntos && r.confianzaAux >= tauAux) {
+      console.error(
+        `\n  FALLO: ${nombre} aceptada pese a ser inconsistente con cabezas seguras ` +
+          `(confianza aux ${(r.confianzaAux * 100).toFixed(0)}% >= ${(tauAux * 100).toFixed(0)}%)\n`,
+      );
       process.exit(1);
     }
+    if (r.valor !== 5 * r.barras + r.puntos) inconsistentesAceptadas++;
   }
   const suma = r.probabilidades.reduce((a, b) => a + b, 0);
   if (Math.abs(suma - 1) > 1e-5) {
@@ -110,8 +118,9 @@ const lb = new Float32Array(etiquetas.num_barras).fill(-3);
 lb[2] = 6;
 const lp = new Float32Array(etiquetas.num_puntos).fill(-3);
 lp[3] = 6;
-const a = decidir(z, lb, lp, { temperatura: 1, tau: 0.5, margen: 0 }, etiquetas);
-const b = decidir(z, lb, lp, { temperatura: 1, tau: 0.5, margen: 0 }, etiquetas);
+const U = { temperatura: 1, tau: 0.5, margen: 0, tau_aux: 0.5 };
+const a = decidir(z, lb, lp, U, etiquetas);
+const b = decidir(z, lb, lp, U, etiquetas);
 if (a.valor !== 13 || a.rechazada || a.valor !== b.valor) {
   console.error(`\n  FALLO: decidir() no es determinista o erró el caso 2 barras + 3 puntos`);
   console.error(`  obtenido: ${JSON.stringify(a)}\n`);
@@ -120,9 +129,22 @@ if (a.valor !== 13 || a.rechazada || a.valor !== b.valor) {
 // R3: la clase dice 13 pero las cabezas dicen 11
 const lp2 = new Float32Array(etiquetas.num_puntos).fill(-3);
 lp2[1] = 6;
-const inc = decidir(z, lb, lp2, { temperatura: 1, tau: 0.5, margen: 0 }, etiquetas);
+const inc = decidir(z, lb, lp2, U, etiquetas);
 if (!inc.rechazada || inc.motivo !== "inconsistencia") {
   console.error(`\n  FALLO: R3 no detectó la inconsistencia (motivo: ${inc.motivo})\n`);
+  process.exit(1);
+}
+// R3 NO debe disparar si las cabezas auxiliares dudan: un falso rechazo cuesta
+// el cuádruple que un falso positivo (ADR-006)
+const dudan = decidir(
+  z,
+  new Float32Array(etiquetas.num_barras),
+  new Float32Array(etiquetas.num_puntos),
+  U,
+  etiquetas,
+);
+if (dudan.rechazada) {
+  console.error(`\n  FALLO: R3 rechazó pese a que las cabezas dudan (motivo: ${dudan.motivo})\n`);
   process.exit(1);
 }
 if (Math.abs(softmax([0, 0, 0]).reduce((x, y) => x + y, 0) - 1) > 1e-9) {
@@ -132,8 +154,9 @@ if (Math.abs(softmax([0, 0, 0]).reduce((x, y) => x + y, 0) - 1) > 1e-9) {
 
 console.log(`\n  ${casos.length} imágenes procesadas`);
 console.log(`  Aceptadas: ${aceptadas}  ·  Rechazadas: ${rechazadas} ${JSON.stringify(motivos)}`);
+console.log(`  Aceptadas con cabezas en desacuerdo pero inseguras: ${inconsistentesAceptadas}`);
 console.log(`  Inferencia: ${(msTotal / casos.length).toFixed(1)} ms de media, ${msPeor.toFixed(1)} ms la peor`);
-console.log("  decidir(): determinista, R3 detecta inconsistencias, probabilidades suman 1");
+console.log("  decidir(): determinista; R3 detecta inconsistencias y NO dispara si las cabezas dudan");
 
 if (msPeor > PRESUPUESTO_MS * 4) {
   console.warn(`\n  AVISO: la peor inferencia (${msPeor.toFixed(0)} ms) supera el presupuesto.`);

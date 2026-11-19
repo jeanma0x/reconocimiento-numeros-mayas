@@ -7,6 +7,8 @@ export interface Umbrales {
   temperatura: number;
   tau: number;
   margen: number;
+  /** R3 solo rechaza si las cabezas auxiliares superan esta confianza. */
+  tau_aux?: number;
   utilidad?: number;
   acierto_en_validas?: number;
   falso_rechazo_en_validas?: number;
@@ -46,6 +48,8 @@ export interface Resultado {
   /** Cabezas auxiliares: lo que la red "contó". */
   barras: number;
   puntos: number;
+  /** Confianza de la cabeza auxiliar menos segura. */
+  confianzaAux: number;
   /** Probabilidades calibradas de las 20 clases. */
   probabilidades: number[];
   /** Las tres clases más probables, ya ordenadas. */

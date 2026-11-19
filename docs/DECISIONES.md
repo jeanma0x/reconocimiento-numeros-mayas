@@ -219,3 +219,37 @@ despliegue incluye 29,6 MB de estáticos, que el CDN sirve una sola vez por nave
 **Alternativas descartadas.** Dejar el CDN: inaceptable por I5. Copiar el paquete completo:
 105 MB sin que nada los use. Activar los hilos de WASM: exigiría las cabeceras COOP/COEP y un
 modelo de 0,5 M de parámetros no los necesita.
+
+
+---
+
+## ADR-012 · R3 solo rechaza si las cabezas auxiliares están seguras
+**Estado:** Aceptada · 2026-11-18 · refina ADR-003 y ADR-006
+
+**Contexto.** Probando la aplicación con el modelo piloto apareció un caso revelador: se dibujó
+un 13 a mano, la cabeza de clase acertó con 37,8%, pero la cabeza de puntos contó 2 en vez de 3.
+Como 5×2+2 = 12 ≠ 13, R3 disparó y la predicción correcta se rechazó.
+
+Eso es un falso rechazo, que según ADR-006 cuesta el cuádruple que un falso positivo. Y el
+razonamiento de R3 estaba incompleto: si una cabeza auxiliar cuenta con tan poca confianza como
+el resto de la red, su desacuerdo no es evidencia contra la cabeza de clase. Es solo otra
+opinión insegura.
+
+**Decisión.** R3 dispara únicamente cuando `min(conf_barras, conf_puntos) >= tau_aux`. El umbral
+`tau_aux` se busca sobre validación en la misma rejilla que `tau` y `margen`, maximizando la
+misma utilidad. Por defecto, si falta en `thresholds.json`, vale 0,5.
+
+**Consecuencias.** Sobre el conjunto de prueba del piloto, R3 pasó de rechazar 6 casos a
+rechazar 1, y las predicciones aceptadas subieron de 27 a 32 sobre 40. El mismo dibujo del 13
+que antes se rechazaba ahora devuelve 13.
+
+A cambio, se aceptan algunas predicciones internamente incoherentes. Es deliberado: cuando la
+red no sabe contar los elementos, la cabeza de clase sigue siendo el mejor estimador disponible,
+y negarse cuesta más que arriesgar. La verificación de consistencia sigue siendo útil justamente
+donde debe serlo: cuando la red **sí** sabe contar y aun así discrepa, que es la firma de una
+entrada basura.
+
+**Alternativas descartadas.** Quitar R3: se pierde una capa de rechazo barata y explicable.
+Dejarlo como estaba: produce falsos rechazos sistemáticos con cualquier modelo imperfecto.
+Promediar las cabezas en vez de verificarlas: convertiría la aritmética en parte del
+clasificador, lo que choca con la invariante I2.

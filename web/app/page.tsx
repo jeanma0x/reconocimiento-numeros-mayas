@@ -191,16 +191,12 @@ export default function Reconocedor() {
 
       {historial.length > 0 && (
         <section className="historial">
-          <h2
-            style={{
-              fontSize: 13,
-              textTransform: "uppercase",
-              letterSpacing: ".04em",
-              color: "var(--gris)",
-            }}
-          >
-            Historial de la sesión ({historial.length})
-          </h2>
+          <div className="historial-cabecera">
+            <h2>Historial de la sesión ({historial.length})</h2>
+            <button className="boton sutil pequeno" onClick={() => setHistorial([])}>
+              Limpiar
+            </button>
+          </div>
           <div className="tira">
             {historial.map((h) => (
               <button

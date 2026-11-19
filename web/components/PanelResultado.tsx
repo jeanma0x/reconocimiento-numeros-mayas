@@ -6,6 +6,9 @@ import { TEXTO_MOTIVO } from "@/lib/inferencia";
 import { LADO } from "@/lib/preprocess";
 import type { Resultado } from "@/lib/tipos";
 
+/** Por debajo de esto la red está prácticamente adivinando (al azar sería 5%). */
+const CONFIANZA_BAJA = 0.4;
+
 function BarrasConfianza({ r }: { r: Resultado }) {
   return (
     <div className="barras">
@@ -96,8 +99,15 @@ export default function PanelResultado({
           </div>
         ) : (
           <div>
-            <div className="cifra acierto">{r.valor}</div>
+            <div className={`cifra acierto${r.confianza < CONFIANZA_BAJA ? " dudosa" : ""}`}>
+              {r.valor}
+            </div>
             <div className="confianza">confianza {(r.confianza * 100).toFixed(0)}%</div>
+            {r.confianza < CONFIANZA_BAJA && (
+              <div className="aviso-duda">
+                La red no está segura. Con 20 clases, acertar al azar sería 5%.
+              </div>
+            )}
             <div className="composicion">
               <span>
                 {r.barras} {r.barras === 1 ? "barra" : "barras"} · {r.puntos}{" "}
@@ -111,7 +121,7 @@ export default function PanelResultado({
 
       <BarrasConfianza r={r} />
 
-      <details className="depuracion">
+      <details className="depuracion" open>
         <summary>Cómo lo vio la red</summary>
         <div className="depu-cuerpo">
           <VistaTensor tensor={r.tensor} />
@@ -137,6 +147,10 @@ export default function PanelResultado({
             <div className="fila">
               <span>Coincide con la clase</span>
               <b>{consistente ? "sí" : "no"}</b>
+            </div>
+            <div className="fila">
+              <span>Confianza de esas cabezas</span>
+              <b>{(r.confianzaAux * 100).toFixed(0)}%</b>
             </div>
             <div className="fila">
               <span>Inferencia</span>

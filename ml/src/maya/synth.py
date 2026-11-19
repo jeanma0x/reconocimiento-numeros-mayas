@@ -300,8 +300,23 @@ def iluminar(img, rng):
     return img * g[:, :, None]
 
 
-def degradar(img, rng):
+def degradar(img, rng, limpia=False):
+    """Rotación, perspectiva, desenfoque, ruido y artefactos de compresión.
+
+    Con `limpia=True` solo se aplica una rotación suave y nada más. Existe porque
+    el lienzo de dibujo de la aplicación produce trazos perfectamente nítidos sobre
+    blanco puro, sin grano ni compresión: si el entrenamiento solo tuviera imágenes
+    degradadas, ese tipo de entrada no estaría en la distribución y la red fallaría
+    justo en la vía más cómoda para que el docente dibuje en vivo.
+    """
     alto, ancho = img.shape[:2]
+    if limpia:
+        if rng.random() < 0.5:
+            ang = rng.uniform(-10, 10)
+            M = cv2.getRotationMatrix2D((ancho / 2, alto / 2), ang, 1.0)
+            img = cv2.warpAffine(img, M, (ancho, alto), flags=cv2.INTER_LINEAR,
+                                 borderValue=(255, 255, 255))
+        return np.clip(img, 0, 255).astype(np.uint8)
     if rng.random() < 0.85:                                          # rotación + perspectiva
         ang = rng.uniform(-15, 15)
         M = cv2.getRotationMatrix2D((ancho / 2, alto / 2), ang, rng.uniform(0.92, 1.06))
@@ -336,8 +351,12 @@ def componer(glifo_y_ref, rng, lienzo=None, tipos_fondo=None) -> np.ndarray:
     alto, ancho = lienzo or (LIENZO, LIENZO)
     tipos = tipos_fondo or ["papel_blanco", "rayado", "cuadriculado", "cartulina",
                             "pizarron_blanco", "pizarron_verde", "madera", "servilleta"]
-    tipo = str(rng.choice(tipos))
-    bg = fondo(tipo, alto, ancho, rng)
+    # Una parte de las muestras imita el lienzo digital: blanco puro, trazo nítido,
+    # sin grano ni degradación. Es lo que produce la pestaña "Dibujar" de la app.
+    limpia = rng.random() < 0.15
+    tipo = "lienzo_digital" if limpia else str(rng.choice(tipos))
+    bg = (np.full((alto, ancho, 3), 255.0) if limpia
+          else fondo(tipo, alto, ancho, rng))
 
     if mask_glifo.size > 1 and mask_glifo.max() > 0:
         gh, gw = mask_glifo.shape
@@ -363,9 +382,12 @@ def componer(glifo_y_ref, rng, lienzo=None, tipos_fondo=None) -> np.ndarray:
         else:
             tinta = np.array(TINTAS[str(rng.choice(list(TINTAS)))], np.float64)
             tinta = np.clip(tinta + rng.normal(0, 12, 3), 0, 255)
-        a = (lienzo_mask.astype(np.float64) / 255.0)[:, :, None] * rng.uniform(0.86, 1.0)
+        opacidad = 1.0 if limpia else rng.uniform(0.86, 1.0)
+        a = (lienzo_mask.astype(np.float64) / 255.0)[:, :, None] * opacidad
         bg = bg * (1 - a) + tinta * a
 
+    if limpia:
+        return degradar(bg, rng, limpia=True)
     return degradar(iluminar(bg, rng), rng)
 
 

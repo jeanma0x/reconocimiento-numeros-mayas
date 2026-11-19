@@ -3,7 +3,7 @@
 > **Este es el archivo más importante del repositorio.** Se lee al empezar cada sesión de trabajo
 > y se actualiza al terminarla. Si está desactualizado, la siguiente sesión empieza a ciegas.
 
-**Última actualización:** 2026-11-18, 21:45 (hora de Guatemala)
+**Última actualización:** 2026-11-18, 22:05 (hora de Guatemala)
 **Actualizado por:** sesión de cimientos (Claude + José Julián)
 
 ---
@@ -101,6 +101,7 @@ imagen en el dataset.**
 | Proyecto de Vercel sin crear | 🟡 Pendiente | Jean Marco |
 | Proyecto de Neon sin crear | 🟡 Pendiente | Jean Marco |
 | Divergencia entre `preprocess.py` y `preprocess.ts` | 🟢 Mitigado por diseño (V1 trivial + test de paridad) | Jean Marco |
+| El modelo piloto cuenta mal los puntos (4 de 4 dibujos fallados) | 🔴 Esperable con 120 img/clase y 12 épocas. Se mide de nuevo tras la corrida real | José Julián |
 | El modelo piloto no rechaza ruido ni hojas en blanco | 🔴 Confirmado en el navegador: una imagen de ruido puro se reconoce como "1" con 34% de confianza. Con `tau`=0,05 ninguna de las cuatro capas dispara. **Hay que volver a evaluarlo con el modelo real**: el piloto vio 1 400 negativos, el real verá 10 000 | José Julián |
 | El modelo no rechaza hojas en blanco (0% en el piloto) | 🟡 Mitigado a medias: guarda de rango plano en el preprocesamiento + peso de `vacio` subido de 4% a 10%. **Verificar en la corrida real** | José Julián |
 | Contar puntos es más difícil que contar barras (piloto: 2–3 puntos ~50%, 0 puntos 97%) | 🟡 Esperable con 120 imágenes por clase; revisar tras la corrida completa | José Julián |
@@ -146,6 +147,28 @@ Nota de entorno: `download.pytorch.org` está bloqueado por el proxy; torch se i
 PyPI. El export a ONNX necesita `onnxscript` (ya está en `requirements.txt`) y hay que pasarle
 `external_data=False`, porque el exportador nuevo de torch saca los pesos a un archivo aparte
 y servir dos archivos al navegador es una fuente de fallos innecesaria.
+
+### 2026-11-18 · Pruebas a mano: tres arreglos reales
+José probó la aplicación dibujando números y falló en cuatro de cuatro. El diagnóstico dio tres
+causas distintas, y dos se pudieron arreglar hoy:
+
+1. **El modelo piloto está crudo** y cuenta mal los puntos. Dos predicciones salieron con 9% de
+   confianza, que con 20 clases es prácticamente azar (5%). Esto solo lo arregla la corrida real:
+   800 imágenes por clase y 60 épocas contra las 120 y 12 del piloto. **Sigue abierto.**
+2. **Hueco de distribución:** el lienzo produce trazos nítidos sobre blanco puro, sin grano,
+   desenfoque ni compresión. Todas las imágenes sintéticas tenían alguna degradación, así que ese
+   tipo de entrada no existía en el entrenamiento. Ahora el 15% de las muestras imita el lienzo
+   digital: blanco puro, trazo nítido, sin degradar. **Se nota a partir de la próxima corrida.**
+3. **R3 producía falsos rechazos.** Un 13 dibujado a mano: la cabeza de clase acertó con 37,8%,
+   pero la de puntos contó 2 en vez de 3 y R3 rechazó la predicción correcta. Se corrigió
+   (ADR-012): R3 ahora solo dispara si las cabezas auxiliares están seguras de su desacuerdo.
+   Sobre el conjunto de prueba, R3 pasó de rechazar 6 casos a 1, y las aceptadas de 27 a 32.
+   El mismo dibujo del 13 ahora devuelve 13.
+
+También se mejoró la interfaz: el lienzo **recorta automáticamente** alrededor del trazo antes de
+reconocer, porque el número ocupaba como un tercio de un lienzo apaisado y al rellenar a cuadrado
+quedaba por debajo del rango de ocupación del entrenamiento. Más lienzo grande, aviso visible
+cuando la confianza es baja, panel de depuración abierto por defecto y botón de limpiar historial.
 
 ### 2026-11-18 · Aplicación web completa y paridad exacta del preprocesamiento
 Se construyó toda la interfaz y el motor de inferencia del navegador. **El camino completo

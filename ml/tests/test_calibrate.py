@@ -19,7 +19,7 @@ def _aux(valor):
     return lb, lp
 
 
-UMBRALES = {"temperatura": 1.0, "tau": 0.5, "margen": 0.0}
+UMBRALES = {"temperatura": 1.0, "tau": 0.5, "margen": 0.0, "tau_aux": 0.5}
 
 
 def test_acepta_una_prediccion_clara_y_consistente():
@@ -41,10 +41,21 @@ def test_R2_baja_confianza():
 
 
 def test_R3_inconsistencia_entre_cabezas():
-    """La clase dice 13 pero las cabezas dicen 2 barras y 1 punto = 11."""
+    """La clase dice 13 pero las cabezas, SEGURAS, dicen 2 barras y 1 punto = 11."""
     lb, lp = _aux(11)
     d = C.decidir(_logits(L.indice_de_valor(13)), lb, lp, UMBRALES)
     assert d["rechazada"] and d["motivo"] == "inconsistencia"
+
+
+def test_R3_no_dispara_si_las_cabezas_auxiliares_dudan():
+    """Si las cabezas contaron con tan poca confianza como el resto, su desacuerdo
+    no es evidencia contra la clase: rechazar ahí tira un acierto, y un falso
+    rechazo cuesta el cuádruple que un falso positivo (ADR-006)."""
+    lb = np.zeros(L.NUM_BARRAS)        # reparto casi uniforme: la cabeza no sabe
+    lp = np.zeros(L.NUM_PUNTOS)
+    d = C.decidir(_logits(L.indice_de_valor(13)), lb, lp, UMBRALES)
+    assert not d["rechazada"], f"rechazó pese a que las cabezas dudan: {d['motivo']}"
+    assert d["valor"] == 13
 
 
 def test_R4_margen_insuficiente():
