@@ -286,6 +286,35 @@ def indexar_externos(raiz="../data", progreso=True) -> list[dict]:
     return unicas
 
 
+def comprobar_archivos(filas, raiz="../data") -> list[str]:
+    """Comprueba que el disco contiene exactamente lo que dicen los manifiestos.
+
+    Es la promesa de data/README.md: con el manifiesto, cualquiera verifica que tiene
+    el mismo dataset. Sirve sobre todo al bajar una carpeta compartida: una descarga
+    incompleta de Drive no avisa, y entrenar con menos imágenes de las que uno cree
+    produce números que no se pueden comparar con los de nadie más.
+    """
+    import hashlib
+
+    raiz = Path(raiz)
+    faltan, distintos = [], []
+    for f in filas:
+        ruta = raiz / f["ruta"]
+        if not ruta.exists():
+            faltan.append(f["ruta"]); continue
+        if hashlib.sha256(ruta.read_bytes()).hexdigest() != f["sha256"]:
+            distintos.append(f["ruta"])
+
+    problemas = []
+    if faltan:
+        problemas.append(f"{len(faltan)} archivos del manifiesto no están en disco "
+                         f"(p. ej. {faltan[0]})")
+    if distintos:
+        problemas.append(f"{len(distintos)} archivos no coinciden con su sha256 "
+                         f"(p. ej. {distintos[0]})")
+    return problemas
+
+
 # --- Cache de tensores --------------------------------------------------------
 
 def construir_cache(filas, raiz="../data", split="train", progreso=True) -> tuple:
@@ -351,6 +380,8 @@ if __name__ == "__main__":
     ap.add_argument("--construir-splits", action="store_true")
     ap.add_argument("--autor-prueba", default=None)
     ap.add_argument("--verificar", action="store_true")
+    ap.add_argument("--comprobar-archivos", action="store_true",
+                    help="comprueba que el disco coincide con los manifiestos (sha256)")
     ap.add_argument("--cache", action="store_true")
     ap.add_argument("--semilla", type=int, default=42)
     a = ap.parse_args()
@@ -370,6 +401,12 @@ if __name__ == "__main__":
     if a.verificar:
         problemas = verificar(filas)
         print("VERIFICACIÓN:", "sin problemas" if not problemas else f"{len(problemas)} problemas")
+        for p in problemas: print("  -", p)
+        raise SystemExit(1 if problemas else 0)
+    if a.comprobar_archivos:
+        problemas = comprobar_archivos(filas, a.raiz)
+        print("ARCHIVOS:", "coinciden con el manifiesto" if not problemas
+              else f"{len(problemas)} problemas")
         for p in problemas: print("  -", p)
         raise SystemExit(1 if problemas else 0)
     if a.cache:

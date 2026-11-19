@@ -36,6 +36,7 @@ python -m maya.dataset --raiz ../data --indexar-reales      # reconstruye manife
 python -m maya.dataset --raiz ../data --indexar-externos    # solo si cambió raw/externo/
 python -m maya.dataset --raiz ../data --construir-splits --autor-prueba imri
 python -m maya.dataset --raiz ../data --verificar           # obligatorio antes de entrenar
+python -m maya.dataset --raiz ../data --comprobar-archivos  # ¿bajé el dataset completo?
 ```
 
 `--indexar-reales` recorre `raw/real/` y arma el manifiesto desde cero: la clase sale de la
@@ -46,6 +47,11 @@ agrega fotos. Avisa si hay duplicados, archivos fuera de la estructura o clases 
 ese dato **entrena y nunca puntúa**: `--construir-splits` lo manda entero a entrenamiento y
 `--verificar` falla si alguno aparece en validación o prueba (ADR-013). Hoy contiene
 `mayavision/`, 4 701 imágenes auditadas.
+
+`--comprobar-archivos` recorre los manifiestos y compara el sha256 de cada archivo con el que
+dice el manifiesto. Córrelo después de bajar la carpeta compartida: una descarga incompleta de
+Drive no avisa, y entrenar con menos imágenes de las que uno cree da números que no se pueden
+comparar con los de nadie más.
 
 **URL de la carpeta compartida:** _(pegar aquí)_
 
