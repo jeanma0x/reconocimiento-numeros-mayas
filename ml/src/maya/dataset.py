@@ -48,15 +48,26 @@ def escribir_manifiesto(filas, ruta) -> None:
 
 
 def unir_manifiestos(raiz="../data") -> list[dict]:
-    """Junta el manifiesto de fotos reales con el del sintético."""
+    """Junta el manifiesto de fotos reales, el del sintético y el del dato externo."""
     raiz = Path(raiz)
-    filas = leer_manifiesto(raiz / "manifest.csv") + leer_manifiesto(raiz / "manifest_synth.csv")
+    filas = (leer_manifiesto(raiz / "manifest.csv")
+             + leer_manifiesto(raiz / "manifest_synth.csv")
+             + leer_manifiesto(raiz / "manifest_externo.csv"))
     for f in filas:
         f.setdefault("estilo", "")
     return filas
 
 
 # --- Splits -------------------------------------------------------------------
+
+def _hash_estable(texto: str) -> int:
+    """hash() de Python cambia de valor entre procesos (PYTHONHASHSEED es aleatorio).
+    Los splits tienen que ser reproducibles: dos corridas con la misma semilla deben
+    dar exactamente el mismo reparto, o comparar dos entrenamientos no significa nada.
+    """
+    import hashlib
+    return int(hashlib.sha1(texto.encode("utf-8")).hexdigest()[:8], 16)
+
 
 def grupo_de(fila: dict) -> str:
     """Clave de agrupación. Nada que comparta grupo puede caer en splits distintos.
@@ -68,6 +79,8 @@ def grupo_de(fila: dict) -> str:
     """
     if fila["fuente"] == "synth":
         return f"synth:{fila['seed']}"
+    if fila["fuente"] == "externo":
+        return f"externo:{fila['autor']}:{fila['clase']}{fila.get('subclase','')}"
     return f"real:{fila['autor']}:{fila['estilo']}:{fila['clase']}{fila.get('subclase','')}"
 
 
@@ -92,12 +105,16 @@ def construir_splits(filas, autor_prueba=None, semilla=42, frac_val=0.12) -> lis
     for f in filas:
         if f["fuente"] == "synth":
             f["split"] = destino[grupo_de(f)]
+        elif f["fuente"] == "externo":
+            # Dato de terceros: entrena, nunca puntúa (ADR-013). Validar o probar
+            # contra él mediría nuestro ajuste al generador ajeno, no a la letra real.
+            f["split"] = "train"
         else:
             if autor_prueba and f["autor"] == autor_prueba:
                 f["split"] = "test"
             else:
                 # Una tanda completa (autor+estilo) cae entera en train o en val
-                h = abs(hash(grupo_de(f) + str(semilla))) % 100
+                h = _hash_estable(grupo_de(f) + str(semilla)) % 100
                 f["split"] = "val" if h < frac_val * 100 else "train"
     return filas
 
@@ -130,6 +147,12 @@ def verificar(filas) -> list[str]:
         n = sum(1 for f in filas if f["split"] == split)
         if n == 0:
             problemas.append(f"split vacío: {split}")
+
+    # El dato externo entrena pero no puntúa (ADR-013)
+    fuera = Counter(f["split"] for f in filas
+                    if f["fuente"] == "externo" and f["split"] != "train")
+    for split, n in fuera.items():
+        problemas.append(f"{n} imágenes externas en {split}: solo pueden ir en train")
     return problemas
 
 
@@ -137,8 +160,9 @@ def resumen(filas) -> str:
     out = []
     for split in ("train", "val", "test"):
         sub = [f for f in filas if f["split"] == split]
-        reales = sum(1 for f in sub if f["fuente"] == "real")
-        out.append(f"  {split:6s} {len(sub):7d}  (reales {reales}, sintéticas {len(sub)-reales})")
+        c = Counter(f["fuente"] for f in sub)
+        out.append(f"  {split:6s} {len(sub):7d}  (reales {c['real']}, "
+                   f"sintéticas {c['synth']}, externas {c['externo']})")
     return "\n".join(out)
 
 
@@ -148,25 +172,24 @@ EXTENSIONES = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".heic"}
 ESTILOS = ("lapicero", "marcador", "lapiz", "crayon", "pluma")
 
 
-def indexar_reales(raiz="../data", progreso=True) -> list[dict]:
-    """Recorre data/raw/real/ y reconstruye data/manifest.csv desde cero.
+def _recorrer(base: Path, fuente: str, raiz: Path) -> tuple[list[dict], list[str]]:
+    """Recorre <base>/<autor>/<clase>/... y devuelve (filas, saltados).
 
-    La clase sale de la carpeta, no del nombre del archivo: meter cada foto en su
-    carpeta ES todo el etiquetado (docs/INSTRUCCIONES-FOTOS.md). Se corre cada vez
-    que alguien agrega fotos; es idempotente.
+    La clase sale de la carpeta, no del nombre del archivo: meter cada imagen en su
+    carpeta ES todo el etiquetado (docs/INSTRUCCIONES-FOTOS.md).
 
     Estructura esperada:
-        real/<autor>/maya_01 .. maya_19/*.jpg
-        real/<autor>/no_valido/<subclase>/*.jpg
-        real/<autor>/extra_<nombre>/maya_01 .. maya_19/*.jpg   (la mano extra)
+        <base>/<autor>/maya_01 .. maya_19/*.jpg
+        <base>/<autor>/no_valido/<subclase>/*.jpg
+        <base>/<autor>/extra_<nombre>/maya_01 .. maya_19/*.jpg   (la mano extra)
     """
     import hashlib
 
     from PIL import Image, ImageOps
 
-    raiz = Path(raiz)
-    base = raiz / "raw" / "real"
     filas, saltados = [], []
+    if not base.exists():
+        return filas, saltados
     for ruta in sorted(base.rglob("*")):
         if not ruta.is_file() or ruta.suffix.lower() not in EXTENSIONES:
             continue
@@ -199,34 +222,67 @@ def indexar_reales(raiz="../data", progreso=True) -> list[dict]:
 
         h = hashlib.sha256(ruta.read_bytes()).hexdigest()
         filas.append({"ruta": ruta.relative_to(raiz).as_posix(), "sha256": h,
-                      "clase": clase, "subclase": subclase, "split": "", "fuente": "real",
+                      "clase": clase, "subclase": subclase, "split": "", "fuente": fuente,
                       "autor": autor, "estilo": estilo, "seed": "",
                       "ancho": ancho, "alto": alto,
                       "creado_en": __import__("datetime").date.today().isoformat()})
+    return filas, saltados
 
+
+def _deduplicar(filas: list[dict]) -> tuple[list[dict], list[str]]:
     vistos, unicas, repetidas = set(), [], []
     for f in filas:
         if f["sha256"] in vistos:
             repetidas.append(f["ruta"])
         else:
             vistos.add(f["sha256"]); unicas.append(f)
+    return unicas, repetidas
 
-    escribir_manifiesto(unicas, raiz / "manifest.csv")
-    if progreso:
-        print(f"  {len(unicas)} fotos indexadas en manifest.csv")
-        por_autor = Counter(f["autor"] for f in unicas)
-        for a, n in sorted(por_autor.items()):
-            print(f"    {a:24s} {n}")
+
+def _informe(unicas, repetidas, saltados, etiqueta: str, avisar_faltantes: bool) -> None:
+    print(f"  {len(unicas)} imágenes indexadas en {etiqueta}")
+    for a, n in sorted(Counter(f["autor"] for f in unicas).items()):
+        print(f"    {a:24s} {n}")
+    if avisar_faltantes:
         faltan = [e for e in L.ETIQUETAS if e != L.ETIQUETA_NO_VALIDO
                   and e not in {f["clase"] for f in unicas}]
         if faltan:
             print(f"  ⚠ clases sin ninguna foto real: {', '.join(faltan)}")
-        if repetidas:
-            print(f"  ⚠ {len(repetidas)} archivos duplicados (mismo contenido), omitidos")
-        if saltados:
-            print(f"  ⚠ {len(saltados)} archivos fuera de la estructura esperada, omitidos:")
-            for s in saltados[:5]:
-                print(f"      {s}")
+    if repetidas:
+        print(f"  ⚠ {len(repetidas)} archivos duplicados (mismo contenido), omitidos")
+    if saltados:
+        print(f"  ⚠ {len(saltados)} archivos fuera de la estructura esperada, omitidos:")
+        for x in saltados[:5]:
+            print(f"      {x}")
+
+
+def indexar_reales(raiz="../data", progreso=True) -> list[dict]:
+    """Reconstruye data/manifest.csv recorriendo data/raw/real/ desde cero.
+
+    Se corre cada vez que alguien agrega fotos; es idempotente.
+    """
+    raiz = Path(raiz)
+    filas, saltados = _recorrer(raiz / "raw" / "real", "real", raiz)
+    unicas, repetidas = _deduplicar(filas)
+    escribir_manifiesto(unicas, raiz / "manifest.csv")
+    if progreso:
+        _informe(unicas, repetidas, saltados, "manifest.csv", avisar_faltantes=True)
+    return unicas
+
+
+def indexar_externos(raiz="../data", progreso=True) -> list[dict]:
+    """Reconstruye data/manifest_externo.csv recorriendo data/raw/externo/.
+
+    Dato que no escribió el equipo: datasets de terceros con la misma estructura de
+    carpetas. Se separa de las fotos reales porque no puntúa: va entero a train
+    (ADR-013). Cada carpeta de primer nivel es su propia "autoría".
+    """
+    raiz = Path(raiz)
+    filas, saltados = _recorrer(raiz / "raw" / "externo", "externo", raiz)
+    unicas, repetidas = _deduplicar(filas)
+    escribir_manifiesto(unicas, raiz / "manifest_externo.csv")
+    if progreso:
+        _informe(unicas, repetidas, saltados, "manifest_externo.csv", avisar_faltantes=False)
     return unicas
 
 
@@ -290,6 +346,8 @@ if __name__ == "__main__":
     ap.add_argument("--raiz", default="../data")
     ap.add_argument("--indexar-reales", action="store_true",
                     help="reconstruye manifest.csv recorriendo data/raw/real/")
+    ap.add_argument("--indexar-externos", action="store_true",
+                    help="reconstruye manifest_externo.csv recorriendo data/raw/externo/")
     ap.add_argument("--construir-splits", action="store_true")
     ap.add_argument("--autor-prueba", default=None)
     ap.add_argument("--verificar", action="store_true")
@@ -299,12 +357,15 @@ if __name__ == "__main__":
 
     if a.indexar_reales:
         indexar_reales(a.raiz)
+    if a.indexar_externos:
+        indexar_externos(a.raiz)
     filas = unir_manifiestos(a.raiz)
     print(f"{len(filas)} filas en los manifiestos")
     if a.construir_splits:
         filas = construir_splits(filas, a.autor_prueba, a.semilla)
         escribir_manifiesto([f for f in filas if f["fuente"] == "real"], Path(a.raiz) / "manifest.csv")
         escribir_manifiesto([f for f in filas if f["fuente"] == "synth"], Path(a.raiz) / "manifest_synth.csv")
+        escribir_manifiesto([f for f in filas if f["fuente"] == "externo"], Path(a.raiz) / "manifest_externo.csv")
         print("splits escritos:"); print(resumen(filas))
     if a.verificar:
         problemas = verificar(filas)

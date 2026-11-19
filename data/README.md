@@ -8,13 +8,17 @@ exactamente el mismo dataset.
 
 ```
 data/
-├── manifest.csv              ← se versiona
+├── manifest.csv              ← se versiona (fotos reales)
+├── manifest_synth.csv        ← se versiona (sintético)
+├── manifest_externo.csv      ← se versiona (datasets de terceros)
 ├── raw/
 │   ├── synthetic/
 │   │   ├── maya_01/ … maya_19/
 │   │   └── no_valido/{cero_maya,mayor_19,casi_valido,multiples,...}/
-│   └── real/
-│       └── <autor>/maya_01/ … maya_19/  y  <autor>/no_valido/<subclase>/
+│   ├── real/
+│   │   └── <autor>/maya_01/ … maya_19/  y  <autor>/no_valido/<subclase>/
+│   └── externo/
+│       └── <dataset>/maya_01/ … maya_19/  y  <dataset>/no_valido/<subclase>/
 └── processed/                ← tensores .npy, generados, nunca versionados
 ```
 
@@ -29,6 +33,7 @@ fotos a `raw/real/<su-nombre>/` y luego:
 ```bash
 cd ml
 python -m maya.dataset --raiz ../data --indexar-reales      # reconstruye manifest.csv
+python -m maya.dataset --raiz ../data --indexar-externos    # solo si cambió raw/externo/
 python -m maya.dataset --raiz ../data --construir-splits --autor-prueba imri
 python -m maya.dataset --raiz ../data --verificar           # obligatorio antes de entrenar
 ```
@@ -36,6 +41,11 @@ python -m maya.dataset --raiz ../data --verificar           # obligatorio antes 
 `--indexar-reales` recorre `raw/real/` y arma el manifiesto desde cero: la clase sale de la
 **carpeta**, no del nombre del archivo. Es idempotente, así que se corre cada vez que alguien
 agrega fotos. Avisa si hay duplicados, archivos fuera de la estructura o clases sin ninguna foto.
+
+`raw/externo/` es para datasets que no escribió el equipo. Misma estructura de carpetas, pero
+ese dato **entrena y nunca puntúa**: `--construir-splits` lo manda entero a entrenamiento y
+`--verificar` falla si alguno aparece en validación o prueba (ADR-013). Hoy contiene
+`mayavision/`, 4 701 imágenes auditadas.
 
 **URL de la carpeta compartida:** _(pegar aquí)_
 

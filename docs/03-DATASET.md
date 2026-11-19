@@ -70,14 +70,18 @@ etiqueta al entrenar.
 
 ```
 data/
-├── manifest.csv              # SÍ se versiona: ruta, sha256, clase, split, fuente, autor
+├── manifest.csv              # fotos reales. SÍ se versiona: ruta, sha256, clase, split, fuente, autor
+├── manifest_synth.csv        # sintético (se regenera con la semilla)
+├── manifest_externo.csv      # datasets de terceros
 ├── raw/
 │   ├── synthetic/
 │   │   ├── maya_01/ … maya_19/
 │   │   └── no_valido/{cero_maya,mayor_19,casi_valido,...}/
-│   └── real/
-│       ├── <autor>/maya_01/ … maya_19/
-│       └── <autor>/no_valido/...
+│   ├── real/
+│   │   ├── <autor>/maya_01/ … maya_19/
+│   │   └── <autor>/no_valido/...
+│   └── externo/
+│       └── <dataset>/maya_01/ … maya_19/, no_valido/...
 └── processed/                # tensores 64×64 en .npy, generados, nunca versionados
 ```
 
@@ -142,7 +146,17 @@ variabilidad es exactamente lo que necesitamos.
 
 Permitido por el enunciado. Útil sobre todo para los negativos genéricos (objetos, personas,
 paisajes) y para glifos del cero maya en estilos distintos. Toda imagen externa se anota en
-`manifest.csv` con su origen.
+`manifest_externo.csv` con su origen.
+
+**Lo que hay hoy: `mayavision`** — 4 701 imágenes sintéticas de terceros (4 560 válidas,
+141 no válidas), en `data/raw/externo/mayavision/`. Importadas tras auditarlas; se descartaron
+240 imágenes y se deduplicaron 339. El porqué de cada descarte está en ADR-013, y la muestra
+por clase que se revisó a ojo, en `docs/evidencia/dataset-externo/`.
+
+**Regla para todo dato externo: entrena, nunca puntúa.** `construir_splits()` le asigna `train`
+siempre, y `verificar()` falla si una fila `externo` aparece en validación o prueba. Validar
+contra dato ajeno mediría cuánto nos parecemos a su generador, no cuánto acertamos sobre letra
+humana, que es lo que se evalúa.
 
 ## Splits y prevención de fuga
 
@@ -151,7 +165,7 @@ conjuntos distintos. Nuestro esquema:
 
 | Conjunto | Composición | Para qué |
 |---|---|---|
-| **Entrenamiento** | Sintético (semillas 0–N) + fotos de José Julián, Jorge Luis y Jean Marco + las manos extra que consigan ellos tres | Ajustar pesos |
+| **Entrenamiento** | Sintético (semillas 0–N) + fotos de José Julián, Jorge Luis y Jean Marco + las manos extra que consigan ellos tres + **todo el dato externo** | Ajustar pesos |
 | **Validación** | Sintético con semillas **disjuntas** + fotos de esos mismos tres, separadas por toma | Early stopping, elección de modelo, temperatura y umbrales |
 | **Prueba** | **Fotos de Imri y de su mano extra, que el modelo nunca vio** + un lote de sintético con semillas nuevas | Reportar el número final. Se toca **una sola vez** |
 
@@ -171,6 +185,11 @@ conjuntos distintos. Nuestro esquema:
    un hash repetido entre conjuntos.
 5. **El aumento de datos se aplica solo en entrenamiento**, nunca al generar los archivos del
    dataset. Validación y prueba se evalúan sin aumentar.
+6. **El dato externo no puntúa** (ADR-013). Va entero a entrenamiento: sus near-duplicados
+   internos inflarían cualquier métrica calculada sobre él.
+7. **El reparto es reproducible.** La asignación de cada toma usa un sha1 estable, no `hash()`
+   de Python, que cambia de valor en cada proceso. Dos corridas con la misma semilla dan el
+   mismo reparto; si no, comparar dos entrenamientos no significaría nada.
 
 ## Aumento de datos (en entrenamiento, al vuelo)
 

@@ -253,3 +253,54 @@ entrada basura.
 Dejarlo como estaba: produce falsos rechazos sistemáticos con cualquier modelo imperfecto.
 Promediar las cabezas en vez de verificarlas: convertiría la aritmética en parte del
 clasificador, lo que choca con la invariante I2.
+
+---
+
+## ADR-013 · El dato externo entrena, pero nunca puntúa
+**Estado:** Aceptada · 2026-11-19 · refina ADR-004 (reglas anti-fuga)
+
+**Contexto.** Llegó un dataset de terceros, `MayaVision_Dataset_Corregido`: 5 280 PNG de
+160×160 repartidos en `train/val/test` por carpeta de número, con su propio manifiesto. No lo
+escribió nadie del equipo. Sumarlo tal cual era tentador —multiplica por veinte el volumen
+etiquetado que tenemos— y por eso mismo había que auditarlo antes.
+
+La auditoría encontró cuatro cosas:
+
+1. **Las etiquetas de las 19 clases válidas son correctas.** Contando componentes conexas,
+   4 426 de 4 560 imágenes cuadran exactamente con su clase. Las 134 restantes no son errores
+   de etiqueta: son puntos que se tocan y el contador los fusiona
+   (`evidencia/dataset-externo/puntos-que-se-tocan.jpg`). Verificado a ojo.
+2. **`twenty_plus` es un 11 disfrazado.** Las 120 imágenes de esa subcategoría dibujan un punto
+   sobre dos barras. En notación posicional eso vale 30, pero dentro de un recorte sin contexto
+   es exactamente un 11 válido. Lo único que las separa es un hueco vertical de 0,319 del alto
+   —idéntico en las 120, varianza cero— frente a 0,21 de media en nuestros 11, 12 y 16. Ese
+   margen lo cruza cualquiera escribiendo a mano.
+3. **`arabic` es una mota.** La tinta ocupa el 6–7% del encuadre. Nuestro preprocesado no
+   recorta a la caja de la tinta (`preprocess.preparar`), así que a 64×64 queda un borrón de
+   cuatro píxeles: indistinguible de un punto pequeño, es decir, de un 1.
+4. **Los negativos están duplicados byte a byte.** De 120 archivos `too_many_dots` solo 9 son
+   distintos; `zero`, 9 de 120; `empty`, 3 de 120. Y 188 formas aparecen en más de uno de sus
+   propios splits.
+
+**Decisión.** Se importa a `data/raw/externo/mayavision/` con `fuente: externo`, y:
+
+- Se **descartan** `twenty_plus` y `arabic` (240 imágenes). La primera enseñaría a rechazar
+  onces; la segunda, a confundir motas con unos. Nuestro generador ya cubre ambas categorías de
+  negativo —`mayor_19` con dos o tres niveles de valores aleatorios, `digitos_arabigos` a
+  tamaño legible— y con variación, no con una plantilla fija.
+- Se deduplica por sha256: quedan **4 701 imágenes** (4 560 válidas + 141 no válidas).
+- Todo lo externo va **siempre a train**. Nunca a validación ni a prueba.
+
+**Consecuencias.** El volumen de entrenamiento etiquetado pasa de 53 fotos reales a 4 754 filas.
+Validación y prueba siguen midiendo lo único que nos van a evaluar: letra humana sobre papel.
+Validar contra dato externo mediría nuestro ajuste al generador ajeno, no a la letra real, y
+además sus 188 formas repartidas entre splits inflarían la cifra sin que nos diéramos cuenta.
+
+La regla deja de depender de la disciplina de quien corra el pipeline: `verificar()` falla si
+una fila `externo` aparece fuera de train, y hay prueba que lo comprueba.
+
+**Alternativas descartadas.** Respetar su `train/val/test`: importa su fuga de near-duplicados a
+nuestra métrica. Meterlo en `data/raw/real/`: mentiría en la columna `fuente` y contaminaría el
+leave-one-person-out, que se reparte por autor. Importar `twenty_plus` igualmente y medir
+después si cae la cobertura del 11: cuesta un entrenamiento entero para comprobar algo que la
+geometría ya dice.

@@ -55,3 +55,10 @@ desktop.ini
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# ---- Archivos comprimidos sueltos (se comparten por Drive, no por git) ----
+*.zip
+!ml/**/*.zip
+
+# ---- Hojas de contacto de trabajo (las definitivas viven en docs/evidencia/) ----
+_revision/

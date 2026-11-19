@@ -3,8 +3,8 @@
 > **Este es el archivo más importante del repositorio.** Se lee al empezar cada sesión de trabajo
 > y se actualiza al terminarla. Si está desactualizado, la siguiente sesión empieza a ciegas.
 
-**Última actualización:** 2026-11-18, 22:35 (hora de Guatemala)
-**Actualizado por:** sesión de cimientos (Claude + José Julián)
+**Última actualización:** 2026-11-19 (hora de Guatemala)
+**Actualizado por:** sesión de datos externos (Claude + José Julián)
 
 ---
 
@@ -95,7 +95,8 @@ imagen en el dataset.**
 
 | Riesgo | Estado | Responsable |
 |---|---|---|
-| Fotos reales insuficientes para el jueves | 🟡 53 de ~336. Solo José entregó; le faltan las 12 variaciones, la hoja en blanco y la mano extra | Todos |
+| Fotos reales insuficientes para el jueves | 🔴 53 de ~336, y es jueves. Solo José entregó; le faltan las 12 variaciones, la hoja en blanco y la mano extra. **Sin fotos de Imri no hay conjunto de prueba**: `--verificar` falla hoy con "split vacío: test" | Todos |
+| Volumen de entrenamiento | 🟢 Resuelto en parte: 4 701 imágenes externas auditadas e importadas (ADR-013). No sustituyen a las fotos reales, que son lo que se evalúa | José Julián |
 | Carpeta de Drive sin crear | 🟢 Creada y cargada con `raw/`; falta pegar el enlace en `data/README.md` | José Julián |
 | Equipo sin invitar al repo | 🟢 Invitados: gabrielcontreras02, jeanma0x, Jzamora09 (pendientes de aceptar) | José Julián |
 | Proyecto de Vercel sin crear | 🟡 Pendiente | Jean Marco |
@@ -122,6 +123,47 @@ corrida real guardada en `ml/runs/`.**
 | Simulacro con persona ajena | ≥ 13/15 | — |
 
 ## Bitácora
+
+### 2026-11-19 · Dataset externo auditado e importado
+
+Llegó `MayaVision_Dataset_Corregido.zip`: 5 280 PNG sintéticos de terceros. Antes de sumarlos
+se auditaron, y la auditoría valió la pena.
+
+**Lo que se revisó y qué salió.** El manifiesto que traía es internamente impecable: 0 archivos
+faltantes, 0 filas donde `barras`/`puntos` no cuadren con la clase, las 19 combinaciones
+presentes. Pero eso solo prueba que el CSV es coherente consigo mismo, así que se midieron las
+imágenes:
+
+- Las 19 clases válidas están bien etiquetadas. Contando componentes conexas, 4 426 de 4 560
+  cuadran exactas; las 134 restantes son puntos que se tocan, no errores — verificado a ojo en
+  `evidencia/dataset-externo/puntos-que-se-tocan.jpg`.
+- `twenty_plus` (120 img) dibuja **un punto sobre dos barras**: un 11 válido. Lo único que lo
+  separa es un hueco vertical de 0,319 del alto, idéntico en las 120, contra 0,21 de media en
+  nuestros 11, 12 y 16. Lo cruza cualquiera escribiendo a mano. **Descartadas.**
+- `arabic` (120 img) ocupa el 6–7% del encuadre; a 64×64 es un borrón de cuatro píxeles,
+  indistinguible de un 1. **Descartadas.**
+- Los negativos venían duplicados byte a byte: de 120 `too_many_dots` solo 9 son distintos;
+  `zero`, 9; `empty`, 3. Y 188 formas aparecían en más de uno de **sus propios** splits.
+
+**Qué se hizo.** Importadas 4 701 imágenes (4 560 válidas + 141 no válidas) a
+`data/raw/externo/mayavision/`, con fuente `externo`. Se descartaron 240 y se deduplicaron 339.
+Razonamiento completo en ADR-013.
+
+**La regla nueva: el dato externo entrena, nunca puntúa.** Va entero a entrenamiento.
+`verificar()` falla si una fila `externo` aparece en validación o prueba, y hay prueba
+automática que lo comprueba. Sus near-duplicados cruzados habrían inflado cualquier métrica
+calculada sobre él, y validar contra dato ajeno mide parecido con su generador, no acierto
+sobre letra humana.
+
+**Un defecto encontrado de paso.** `construir_splits()` repartía las fotos reales con `hash()`
+de Python, que cambia de valor en cada proceso: el reparto train/val era distinto en cada
+corrida. No causaba fuga —cada grupo seguía yendo entero a un split— pero hacía que dos
+entrenamientos no fueran comparables. Cambiado a sha1 estable; verificado con cuatro
+`PYTHONHASHSEED` distintos dando el mismo reparto, y con prueba automática que lo fija.
+
+**Estado del pipeline tras el cambio:** 4 754 filas, 4 747 en entrenamiento, 7 en validación,
+**0 en prueba**. Ese cero es el cuello de botella real del proyecto y no lo arregla ningún
+dataset externo: hacen falta las fotos de Imri.
 
 ### 2026-11-18 · Pipeline de ML completo y probado de punta a punta
 Se implementaron los ocho módulos de `ml/src/maya/` y se corrió el camino completo con un
