@@ -3,7 +3,7 @@
 > **Este es el archivo más importante del repositorio.** Se lee al empezar cada sesión de trabajo
 > y se actualiza al terminarla. Si está desactualizado, la siguiente sesión empieza a ciegas.
 
-**Última actualización:** 2026-11-18, 19:20 (hora de Guatemala)
+**Última actualización:** 2026-11-18, 20:25 (hora de Guatemala)
 **Actualizado por:** sesión de cimientos (Claude + José Julián)
 
 ---
@@ -81,9 +81,9 @@ imagen en el dataset.**
 
 | Riesgo | Estado | Responsable |
 |---|---|---|
-| Fotos reales insuficientes para el jueves | 🟡 42 de ~336. Solo José entregó, y le faltan variedad y 13 negativos | Todos |
-| Carpeta de Drive sin crear | 🔴 Abierto | José Julián |
-| Equipo sin invitar al repo (faltan sus usuarios de GitHub) | 🟡 Pendiente | José Julián |
+| Fotos reales insuficientes para el jueves | 🟡 53 de ~336. Solo José entregó; le faltan las 12 variaciones, la hoja en blanco y la mano extra | Todos |
+| Carpeta de Drive sin crear | 🟢 Creada y cargada con `raw/`; falta pegar el enlace en `data/README.md` | José Julián |
+| Equipo sin invitar al repo | 🟢 Invitados: gabrielcontreras02, jeanma0x, Jzamora09 (pendientes de aceptar) | José Julián |
 | Proyecto de Vercel sin crear | 🟡 Pendiente | Jean Marco |
 | Proyecto de Neon sin crear | 🟡 Pendiente | Jean Marco |
 | Divergencia entre `preprocess.py` y `preprocess.ts` | 🟢 Mitigado por diseño (V1 trivial + test de paridad) | Jean Marco |
@@ -131,6 +131,21 @@ Nota de entorno: `download.pytorch.org` está bloqueado por el proxy; torch se i
 PyPI. El export a ONNX necesita `onnxscript` (ya está en `requirements.txt`) y hay que pasarle
 `external_data=False`, porque el exportador nuevo de torch saca los pesos a un archivo aparte
 y servir dos archivos al navegador es una fuente de fallos innecesaria.
+
+### 2026-11-18 · Negativos de José e indexado automático
+Se añadió `maya.dataset --indexar-reales`, que recorre `data/raw/real/` y reconstruye el
+manifiesto: la clase sale de la carpeta, el autor del primer nivel y una carpeta `extra_<nombre>`
+cuenta como persona aparte. Es idempotente, así que se corre cada vez que alguien agrega fotos.
+
+José entregó 11 negativos más, identificados uno por uno contra su hoja de contacto y colocados
+en sus subcarpetas: el 25 y el 33 en `mayor_19`; 5 puntos, 6 puntos, 4 barras, 5 barras, puntos
+abajo y dispersos en `casi_valido`; dos números lado a lado en `multiples`; el 42 y un garabato
+en `otros`. **Total de José: 53 fotos (38 válidas + 15 negativos).** Le falta la hoja en blanco,
+las 12 variaciones de luz y fondo, y su mano extra.
+
+La verificación anti-fuga falla a propósito con "split vacío: test", porque el conjunto de prueba
+son las fotos de Imri y todavía no hay ninguna. Es el comportamiento correcto: el sistema se
+niega a entrenar sin un conjunto de prueba honesto.
 
 ### 2026-11-18 · Primeras fotos reales
 José entregó 42 fotos: los 19 números en dos rondas (lapicero y marcador), más el cero maya y el
