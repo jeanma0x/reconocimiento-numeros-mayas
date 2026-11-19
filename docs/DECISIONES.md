@@ -177,3 +177,45 @@ CDN para el modelo. Nadie despliega a mano.
 **Alternativas descartadas.** Vite + SPA: necesitaría un backend aparte para Neon. GitHub Pages:
 no tiene endpoints de servidor. Streamlit o Gradio: rápidos de montar, pero obligan a inferencia en
 servidor, lo que contradice ADR-001.
+
+
+---
+
+## ADR-010 · CSS propio en lugar de Tailwind y shadcn/ui
+**Estado:** Aceptada · 2026-11-18 · reemplaza la elección de UI de ADR-009
+
+**Contexto.** `02-STACK.md` proponía Tailwind 4 y shadcn/ui. Al construir la aplicación, esas
+dos piezas aportaban un plugin de PostCSS, un generador de componentes y varias decenas de
+dependencias, para una interfaz que son dos columnas, unos botones y unas barras de progreso.
+
+**Decisión.** CSS escrito a mano en `app/globals.css`, con variables y modo claro/oscuro.
+Dependencias de la aplicación: `next`, `react`, `react-dom`, `onnxruntime-web` y
+`@neondatabase/serverless`. Nada más.
+
+**Consecuencias.** El build es de menos de un segundo y no hay plugins que puedan fallar al
+actualizar. A cambio, no hay utilidades de Tailwind: cualquier estilo nuevo se escribe en
+`globals.css`. Para el tamaño de esta interfaz es un buen intercambio; para una aplicación
+grande no lo sería.
+
+**Alternativas descartadas.** Tailwind + shadcn: más potencia de la necesaria y más superficie
+de fallo a tres días de la entrega. Componentes de terceros: mismo problema.
+
+---
+
+## ADR-011 · Los binarios de onnxruntime se sirven desde el propio sitio
+**Estado:** Aceptada · 2026-11-18
+
+**Contexto.** Por defecto `onnxruntime-web` descarga sus archivos `.wasm` de un CDN. Eso
+rompería el invariante I5: la demo tiene que funcionar sin internet.
+
+**Decisión.** `scripts/copiar-wasm.mjs` copia los binarios a `public/ort/` en cada `dev` y
+`build`, y `ort.env.wasm.wasmPaths` apunta ahí. Se copian solo los dos archivos que el
+navegador pide de verdad con nuestra configuración (29,6 MB de los 105 MB del paquete),
+medido con Chrome.
+
+**Consecuencias.** La app funciona sin red desde la segunda carga, con todo en caché. El
+despliegue incluye 29,6 MB de estáticos, que el CDN sirve una sola vez por navegador.
+
+**Alternativas descartadas.** Dejar el CDN: inaceptable por I5. Copiar el paquete completo:
+105 MB sin que nada los use. Activar los hilos de WASM: exigiría las cabeceras COOP/COEP y un
+modelo de 0,5 M de parámetros no los necesita.

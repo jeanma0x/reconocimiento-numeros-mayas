@@ -3,29 +3,51 @@
 Next.js + TypeScript + Tailwind + shadcn/ui. Corre el modelo en el navegador con
 `onnxruntime-web`. Especificación completa en `../docs/05-FRONTEND.md`.
 
-## Crear el proyecto (solo la primera vez)
+## Arranque
 
-Desde la raíz del repositorio:
+La aplicación ya está construida. Solo hay que instalar y correr:
 
 ```bash
-npx create-next-app@latest web --ts --tailwind --eslint --app --src-dir=false \
-    --import-alias "@/*" --use-npm
 cd web
-npm install onnxruntime-web @neondatabase/serverless recharts
-npx shadcn@latest init
-npx shadcn@latest add button card tabs badge progress alert skeleton
+npm install
+npm run dev            # http://localhost:3000
 ```
 
-Conservar este README al sobrescribir la carpeta.
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción, lo mismo que corre Vercel |
+| `npm start` | Sirve el build. **Es el respaldo local del día de la presentación** |
+| `npm run test:parity` | Paridad del preprocesamiento contra los fixtures de Python |
+| `npm run test:inference` | Carga el `.onnx` y verifica el motor de inferencia de punta a punta |
 
-## Desarrollo
+Los dos tests necesitan los fixtures, que se generan una vez desde `ml/`:
 
 ```bash
-npm run dev            # http://localhost:3000
-npm run build          # lo mismo que corre Vercel
-npm start              # respaldo local para el día de la presentación
-npm run test:parity    # paridad del preprocesamiento contra los fixtures de Python
+cd ../ml && python -m maya.preprocess --fixtures ../web/fixtures
 ```
+
+`npm run dev` y `npm run build` copian antes los binarios `.wasm` de onnxruntime a
+`public/ort/`. Sin eso el navegador los buscaría en un CDN y la aplicación dejaría de
+funcionar sin internet, que es justo lo que no podemos permitirnos el sábado.
+
+## Qué hay implementado
+
+- **Cuatro formas de entrada**: selector de archivos, arrastrar y soltar, pegar con Ctrl+V,
+  cámara en vivo y lienzo para dibujar con el mouse o el dedo.
+- **Resultado** con el número en grande o el aviso de rechazo con su motivo técnico.
+- **Barras de confianza** con las tres clases más probables.
+- **Panel "cómo lo vio la red"**: el tensor de 64×64 que realmente entró, las cabezas de
+  barras y puntos, la verificación de consistencia y el tiempo de inferencia.
+- **Historial de la sesión**: se puede volver a cualquier predicción anterior.
+- **Modo presentación** con la tecla `P`: agranda el resultado y oculta lo secundario.
+- **Página `/acerca`** con la tabla de los 19 números, las métricas del modelo y la
+  arquitectura. Sirve de material de apoyo en la exposición.
+
+## Sin Tailwind ni shadcn/ui
+
+Se usa CSS escrito a mano en `app/globals.css`, con variables y modo claro/oscuro. Menos
+dependencias es menos cosas que pueden romperse el viernes por la noche. Ver ADR-010.
 
 ## Variables de entorno
 

@@ -28,6 +28,7 @@ entre el píxel de entrada y el de salida: eso es idéntico en cualquier lenguaj
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -179,30 +180,38 @@ def preparar_archivo(ruta: str | Path) -> np.ndarray:
 # --- Fixtures para el test de paridad ----------------------------------------
 
 def generar_fixtures(destino: str | Path, n: int = 200, semilla: int = 42) -> int:
-    """Escribe pares (imagen PNG, tensor .npy) que `web` usa para verificar su port.
+    """Escribe los pares de referencia que `web` usa para verificar su port.
 
-    Mezcla imágenes sintéticas con variación fuerte y casos límite (imagen plana,
-    muy apaisada, muy alta, 1x1, polaridad invertida) porque son los que rompen un
-    port descuidado.
+    Por cada caso escribe tres archivos:
+      NNN.png   la imagen, para poder mirarla
+      NNN.bin   los mismos píxeles en crudo: uint32 ancho, uint32 alto, RGBA
+      NNN.f32   el tensor 64x64 esperado, float32
+
+    El .bin existe para que el test de paridad en Node no dependa de un decodificador
+    de PNG: lo que hay que comparar es el preprocesamiento, no cómo cada lenguaje
+    descomprime una imagen. Decodificar es trabajo del navegador y ahí ya confiamos
+    en `createImageBitmap`.
+
+    Se mezclan imágenes sintéticas con casos límite (plana, muy apaisada, muy alta,
+    1x1, polaridad invertida, ruido puro) porque son los que rompen un port descuidado.
     """
+    import struct
+
     from PIL import Image
+
     from . import synth
 
     destino = Path(destino)
     destino.mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(semilla)
-    escritas = 0
 
-    casos = []
-    for i in range(n - 6):
-        valor = 1 + (i % 19)
-        casos.append(("synth", valor, i))
+    casos = [("synth", 1 + (i % 19), i) for i in range(max(0, n - 6))]
     casos += [("plana", 0, 0), ("apaisada", 7, 1), ("alta", 13, 2),
               ("minima", 0, 3), ("invertida", 19, 4), ("ruido", 0, 5)]
 
     for idx, (tipo, valor, k) in enumerate(casos):
         if tipo == "synth":
-            img = synth.imagen_de_numero(valor, np.random.default_rng(10_000 + k))
+            img = synth.imagen_de_numero(valor, np.random.default_rng(10_000 + k), lienzo=(192, 192))
         elif tipo == "plana":
             img = np.full((120, 160, 3), 200, dtype=np.uint8)
         elif tipo == "apaisada":
@@ -212,14 +221,23 @@ def generar_fixtures(destino: str | Path, n: int = 200, semilla: int = 42) -> in
         elif tipo == "minima":
             img = np.array([[[128, 128, 128]]], dtype=np.uint8)
         elif tipo == "invertida":
-            img = 255 - synth.imagen_de_numero(valor, np.random.default_rng(3))
+            img = 255 - synth.imagen_de_numero(valor, np.random.default_rng(3), lienzo=(192, 192))
         else:
             img = rng.integers(0, 256, (100, 100, 3), dtype=np.uint8)
 
+        alto, ancho = img.shape[:2]
         Image.fromarray(img).save(destino / f"{idx:03d}.png")
-        np.save(destino / f"{idx:03d}.npy", preparar(img))
-        escritas += 1
-    return escritas
+        rgba = np.concatenate([img, np.full((alto, ancho, 1), 255, np.uint8)], axis=2)
+        with open(destino / f"{idx:03d}.bin", "wb") as f:
+            f.write(struct.pack("<II", ancho, alto))
+            f.write(rgba.tobytes())
+        preparar(img).astype(np.float32).tofile(destino / f"{idx:03d}.f32")
+
+    (destino / "indice.json").write_text(
+        json.dumps({"n": len(casos), "lado": LADO,
+                    "casos": [{"i": i, "tipo": c[0]} for i, c in enumerate(casos)]},
+                   indent=2), encoding="utf-8")
+    return len(casos)
 
 
 if __name__ == "__main__":

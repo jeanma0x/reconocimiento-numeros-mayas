@@ -3,7 +3,7 @@
 > **Este es el archivo más importante del repositorio.** Se lee al empezar cada sesión de trabajo
 > y se actualiza al terminarla. Si está desactualizado, la siguiente sesión empieza a ciegas.
 
-**Última actualización:** 2026-11-18, 20:25 (hora de Guatemala)
+**Última actualización:** 2026-11-18, 21:45 (hora de Guatemala)
 **Actualizado por:** sesión de cimientos (Claude + José Julián)
 
 ---
@@ -19,7 +19,7 @@ imagen en el dataset.**
 | Fase | Estado |
 |---|---|
 | 0 · Cimientos: repo, docs, contratos | ✅ Completada |
-| 1 · Camino completo de punta a punta (meta: miércoles 18) | 🟡 Pipeline de ML completo y probado; falta la app web |
+| 1 · Camino completo de punta a punta (meta: miércoles 18) | ✅ **Completada.** Imagen → preprocesamiento → ONNX → número en pantalla, verificado en un navegador real |
 | 2 · Modelo bueno + interfaz completa (meta: jueves 19) | ⬜ No iniciada |
 | 3 · QA, simulacros, ensayo, congelar (meta: viernes 20) | ⬜ No iniciada |
 | 4 · Presentación (sábado 21, 07:00) | ⬜ |
@@ -52,6 +52,19 @@ imagen en el dataset.**
       verificado contra PyTorch (max|diff| 3,3e-06, 100% de coincidencia en 200 muestras)
 - [x] `web/public/models/` con un modelo cargable: el frontend ya puede arrancar
 - [x] `ml/notebooks/entrenar_en_colab.ipynb` para la corrida real con GPU
+- [x] **Aplicación web completa y funcionando** (`web/`): Next.js 16 + React 19, sin Tailwind
+      ni shadcn (ADR-010). Cuatro entradas (archivo, arrastrar, Ctrl+V, cámara, lienzo),
+      resultado grande, barras de confianza, panel "cómo lo vio la red" con el tensor de
+      64×64, historial de sesión, modo presentación con la tecla P y página `/acerca`
+- [x] **`web/lib/preprocess.ts`: port del preprocesamiento, con paridad EXACTA**
+      (diferencia 0,0 en los 200 fixtures, no solo por debajo de la tolerancia de 1e-4)
+- [x] `npm run test:parity` y `npm run test:inference`, ambos en verde. El de paridad se
+      verificó con un control negativo: al romper un percentil a propósito, falla en 120 casos
+- [x] Binarios de onnxruntime servidos desde el propio sitio, no desde un CDN (ADR-011):
+      la app funciona sin internet desde la segunda carga
+- [x] Verificado en Chrome de verdad: carga una imagen y predice; un dibujo a mano de
+      2 puntos sobre 1 barra se reconoce como 7; sin errores de consola; 10 ms de
+      inferencia media, 21 ms la peor
 
 ## Siguiente paso concreto
 
@@ -71,11 +84,12 @@ imagen en el dataset.**
 3. **Corrida real en Colab con GPU** (`ml/notebooks/entrenar_en_colab.ipynb`): dataset
    completo (800 por clase + 10 000 negativos), etapa A, etapa B con las fotos reales,
    calibración y export. Es lo único que falta del lado del modelo.
-4. **Scaffold de Next.js** y carga del `.onnx` que ya está en `web/public/models/`.
-   No hace falta esperar al modelo bueno: el piloto carga y predice.
-5. **`web/lib/preprocess.ts`**: port de los 7 pasos de `preprocess.py`. Generar antes
-   los fixtures con `python -m maya.preprocess --fixtures tests/fixtures`.
-6. **Test de paridad** `npm run test:parity` y despliegue en Vercel.
+4. **Despliegue en Vercel** (Jean Marco): root directory `web`, y conectar el repo.
+5. **Neon** (Jean Marco): correr `scripts/esquema.sql` y poner `DATABASE_URL`. El endpoint
+   `/api/predicciones` ya está escrito y responde 204 sin base de datos, así que se puede
+   activar cuando sea.
+6. **Dashboard `/dashboard`** (Jean Marco): lee de Neon, es lo único de la interfaz que falta.
+7. **Sustituir el modelo piloto** por el de la corrida real y volver a correr los dos tests.
 
 ## Bloqueos y riesgos abiertos
 
@@ -87,6 +101,7 @@ imagen en el dataset.**
 | Proyecto de Vercel sin crear | 🟡 Pendiente | Jean Marco |
 | Proyecto de Neon sin crear | 🟡 Pendiente | Jean Marco |
 | Divergencia entre `preprocess.py` y `preprocess.ts` | 🟢 Mitigado por diseño (V1 trivial + test de paridad) | Jean Marco |
+| El modelo piloto no rechaza ruido ni hojas en blanco | 🔴 Confirmado en el navegador: una imagen de ruido puro se reconoce como "1" con 34% de confianza. Con `tau`=0,05 ninguna de las cuatro capas dispara. **Hay que volver a evaluarlo con el modelo real**: el piloto vio 1 400 negativos, el real verá 10 000 | José Julián |
 | El modelo no rechaza hojas en blanco (0% en el piloto) | 🟡 Mitigado a medias: guarda de rango plano en el preprocesamiento + peso de `vacio` subido de 4% a 10%. **Verificar en la corrida real** | José Julián |
 | Contar puntos es más difícil que contar barras (piloto: 2–3 puntos ~50%, 0 puntos 97%) | 🟡 Esperable con 120 imágenes por clase; revisar tras la corrida completa | José Julián |
 
@@ -131,6 +146,31 @@ Nota de entorno: `download.pytorch.org` está bloqueado por el proxy; torch se i
 PyPI. El export a ONNX necesita `onnxscript` (ya está en `requirements.txt`) y hay que pasarle
 `external_data=False`, porque el exportador nuevo de torch saca los pesos a un archivo aparte
 y servir dos archivos al navegador es una fuente de fallos innecesaria.
+
+### 2026-11-18 · Aplicación web completa y paridad exacta del preprocesamiento
+Se construyó toda la interfaz y el motor de inferencia del navegador. **El camino completo
+funciona**: se carga una imagen, se preprocesa en TypeScript, corre el `.onnx` con ONNX Runtime
+y aparece el número en pantalla. Verificado en un Chrome real, no solo compilando.
+
+Lo más importante del día: **la paridad del preprocesamiento es exacta**, diferencia 0,0 en los
+200 fixtures, no simplemente por debajo de la tolerancia. Python y TypeScript producen el mismo
+tensor bit a bit. Para asegurarse de que el test mide algo, se corrió un control negativo:
+cambiando el percentil bajo de 1,0 a 1,5 el test falla en 120 de 200 casos. La clave fue no
+usar `canvas.drawImage` ni `cv2.INTER_AREA` para reescalar, sino una matriz de pesos
+fraccionarios idéntica en los dos lenguajes.
+
+Prueba de la interfaz en Chrome: se dibujó a mano en el lienzo 2 puntos sobre 1 barra y el
+modelo respondió **7**, con las cabezas diciendo 1 barra y 2 puntos. Sin errores de consola.
+Inferencia de 10 ms de media y 21 ms la peor, muy por debajo del presupuesto de 150 ms.
+
+Tres defectos encontrados y corregidos al mirar la aplicación corriendo:
+
+1. **Las barras de confianza no se rellenaban.** El `<span>` interno era `inline` y el ancho no
+   se le aplica. No lo detecta ningún test automático: hay que mirar la pantalla.
+2. **`public/ort/` pesaba 105 MB.** Se copiaban todos los binarios de onnxruntime. Midiendo las
+   peticiones reales del navegador resultó que solo usa dos, 29,6 MB (ADR-011).
+3. Los imports internos de `lib/` necesitaban extensión `.ts` explícita para que Node pudiera
+   correr los tests sobre los mismos archivos que usa el navegador.
 
 ### 2026-11-18 · Negativos de José e indexado automático
 Se añadió `maya.dataset --indexar-reales`, que recorre `data/raw/real/` y reconstruye el
