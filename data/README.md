@@ -53,7 +53,10 @@ dice el manifiesto. Córrelo después de bajar la carpeta compartida: una descar
 Drive no avisa, y entrenar con menos imágenes de las que uno cree da números que no se pueden
 comparar con los de nadie más.
 
-**URL de la carpeta compartida:** _(pegar aquí)_
+**URL de la carpeta compartida:** https://drive.google.com/drive/folders/1MQEUrVd-QbR_O75I8-tzea5K0Xa_tl4X
+
+Adentro, `raw/` espeja esta misma estructura. Si te sale "necesitas acceso", pedíselo a
+José Julián: el enlace no da permiso por sí solo.
 
 ## Tu tarea de captura
 

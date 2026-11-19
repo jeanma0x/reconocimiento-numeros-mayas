@@ -97,7 +97,7 @@ imagen en el dataset.**
 |---|---|---|
 | Fotos reales insuficientes para el jueves | 🔴 53 de ~336, y es jueves. Solo José entregó; le faltan las 12 variaciones, la hoja en blanco y la mano extra. **Sin fotos de Imri no hay conjunto de prueba**: `--verificar` falla hoy con "split vacío: test" | Todos |
 | Volumen de entrenamiento | 🟢 Resuelto en parte: 4 701 imágenes externas auditadas e importadas (ADR-013). No sustituyen a las fotos reales, que son lo que se evalúa | José Julián |
-| Carpeta de Drive sin crear | 🟢 Creada y cargada con `raw/`; falta pegar el enlace en `data/README.md` | José Julián |
+| Carpeta de Drive | 🟡 `ProyectoMaya/raw/externo/mayavision.zip` subido y el enlace ya está en `data/README.md`. Falta subir el árbol `raw/real/` y compartir con el equipo | José Julián |
 | Equipo sin invitar al repo | 🟢 Invitados: gabrielcontreras02, jeanma0x, Jzamora09 (pendientes de aceptar) | José Julián |
 | Proyecto de Vercel sin crear | 🟡 Pendiente | Jean Marco |
 | Proyecto de Neon sin crear | 🟡 Pendiente | Jean Marco |
