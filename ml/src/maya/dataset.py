@@ -59,10 +59,16 @@ def unir_manifiestos(raiz="../data") -> list[dict]:
 # --- Splits -------------------------------------------------------------------
 
 def grupo_de(fila: dict) -> str:
-    """Clave de agrupación. Nada que comparta grupo puede caer en splits distintos."""
+    """Clave de agrupación. Nada que comparta grupo puede caer en splits distintos.
+
+    Para las fotos, el grupo es una "hoja": un número, escrito por una persona, en un
+    estilo. Varias fotos de la misma hoja quedan juntas, que es lo que exige la regla
+    anti-fuga. Agrupar por autor entero sería más conservador pero dejaría sin fotos
+    reales al conjunto de validación.
+    """
     if fila["fuente"] == "synth":
         return f"synth:{fila['seed']}"
-    return f"real:{fila['autor']}:{fila['estilo']}"
+    return f"real:{fila['autor']}:{fila['estilo']}:{fila['clase']}{fila.get('subclase','')}"
 
 
 def construir_splits(filas, autor_prueba=None, semilla=42, frac_val=0.12) -> list[dict]:
@@ -136,6 +142,94 @@ def resumen(filas) -> str:
     return "\n".join(out)
 
 
+# --- Indexado de las fotos reales ---------------------------------------------
+
+EXTENSIONES = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".heic"}
+ESTILOS = ("lapicero", "marcador", "lapiz", "crayon", "pluma")
+
+
+def indexar_reales(raiz="../data", progreso=True) -> list[dict]:
+    """Recorre data/raw/real/ y reconstruye data/manifest.csv desde cero.
+
+    La clase sale de la carpeta, no del nombre del archivo: meter cada foto en su
+    carpeta ES todo el etiquetado (docs/INSTRUCCIONES-FOTOS.md). Se corre cada vez
+    que alguien agrega fotos; es idempotente.
+
+    Estructura esperada:
+        real/<autor>/maya_01 .. maya_19/*.jpg
+        real/<autor>/no_valido/<subclase>/*.jpg
+        real/<autor>/extra_<nombre>/maya_01 .. maya_19/*.jpg   (la mano extra)
+    """
+    import hashlib
+
+    from PIL import Image, ImageOps
+
+    raiz = Path(raiz)
+    base = raiz / "raw" / "real"
+    filas, saltados = [], []
+    for ruta in sorted(base.rglob("*")):
+        if not ruta.is_file() or ruta.suffix.lower() not in EXTENSIONES:
+            continue
+        rel = ruta.relative_to(base).parts
+        autor = rel[0]
+        resto = rel[1:-1]
+        if resto and resto[0].startswith("extra_"):
+            # La mano extra es otra persona: cuenta como autor propio para los splits
+            autor = f"{autor}-{resto[0]}"
+            resto = resto[1:]
+        if not resto:
+            saltados.append(str(ruta.relative_to(base))); continue
+
+        if resto[0] == "no_valido":
+            clase, subclase = "no_valido", (resto[1] if len(resto) > 1 else "otros")
+        elif resto[0].startswith("maya_"):
+            clase, subclase = resto[0], ""
+        else:
+            saltados.append(str(ruta.relative_to(base))); continue
+        if clase not in L.ETIQUETAS:
+            saltados.append(str(ruta.relative_to(base))); continue
+
+        nombre = ruta.name.lower()
+        estilo = next((e for e in ESTILOS if e in nombre or e in "/".join(rel).lower()), "")
+        try:
+            with Image.open(ruta) as im:
+                ancho, alto = ImageOps.exif_transpose(im).size
+        except Exception:
+            saltados.append(str(ruta.relative_to(base))); continue
+
+        h = hashlib.sha256(ruta.read_bytes()).hexdigest()
+        filas.append({"ruta": ruta.relative_to(raiz).as_posix(), "sha256": h,
+                      "clase": clase, "subclase": subclase, "split": "", "fuente": "real",
+                      "autor": autor, "estilo": estilo, "seed": "",
+                      "ancho": ancho, "alto": alto,
+                      "creado_en": __import__("datetime").date.today().isoformat()})
+
+    vistos, unicas, repetidas = set(), [], []
+    for f in filas:
+        if f["sha256"] in vistos:
+            repetidas.append(f["ruta"])
+        else:
+            vistos.add(f["sha256"]); unicas.append(f)
+
+    escribir_manifiesto(unicas, raiz / "manifest.csv")
+    if progreso:
+        print(f"  {len(unicas)} fotos indexadas en manifest.csv")
+        por_autor = Counter(f["autor"] for f in unicas)
+        for a, n in sorted(por_autor.items()):
+            print(f"    {a:24s} {n}")
+        faltan = [e for e in L.ETIQUETAS if e != L.ETIQUETA_NO_VALIDO
+                  and e not in {f["clase"] for f in unicas}]
+        if faltan:
+            print(f"  ⚠ clases sin ninguna foto real: {', '.join(faltan)}")
+        if repetidas:
+            print(f"  ⚠ {len(repetidas)} archivos duplicados (mismo contenido), omitidos")
+        if saltados:
+            print(f"  ⚠ {len(saltados)} archivos fuera de la estructura esperada, omitidos:")
+            for s in saltados[:5]:
+                print(f"      {s}")
+    return unicas
+
+
 # --- Cache de tensores --------------------------------------------------------
 
 def construir_cache(filas, raiz="../data", split="train", progreso=True) -> tuple:
@@ -194,6 +288,8 @@ if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser(description="Splits, verificación y cache del dataset")
     ap.add_argument("--raiz", default="../data")
+    ap.add_argument("--indexar-reales", action="store_true",
+                    help="reconstruye manifest.csv recorriendo data/raw/real/")
     ap.add_argument("--construir-splits", action="store_true")
     ap.add_argument("--autor-prueba", default=None)
     ap.add_argument("--verificar", action="store_true")
@@ -201,6 +297,8 @@ if __name__ == "__main__":
     ap.add_argument("--semilla", type=int, default=42)
     a = ap.parse_args()
 
+    if a.indexar_reales:
+        indexar_reales(a.raiz)
     filas = unir_manifiestos(a.raiz)
     print(f"{len(filas)} filas en los manifiestos")
     if a.construir_splits:

@@ -27,8 +27,15 @@ Carpeta compartida (Drive o OneDrive) con la misma estructura de `raw/`. Cada qu
 fotos a `raw/real/<su-nombre>/` y luego:
 
 ```bash
-cd ml && python -m maya.dataset --sincronizar --verificar
+cd ml
+python -m maya.dataset --raiz ../data --indexar-reales      # reconstruye manifest.csv
+python -m maya.dataset --raiz ../data --construir-splits --autor-prueba imri
+python -m maya.dataset --raiz ../data --verificar           # obligatorio antes de entrenar
 ```
+
+`--indexar-reales` recorre `raw/real/` y arma el manifiesto desde cero: la clase sale de la
+**carpeta**, no del nombre del archivo. Es idempotente, así que se corre cada vez que alguien
+agrega fotos. Avisa si hay duplicados, archivos fuera de la estructura o clases sin ninguna foto.
 
 **URL de la carpeta compartida:** _(pegar aquí)_
 
