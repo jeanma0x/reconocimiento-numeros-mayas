@@ -3,7 +3,7 @@
 > **Este es el archivo más importante del repositorio.** Se lee al empezar cada sesión de trabajo
 > y se actualiza al terminarla. Si está desactualizado, la siguiente sesión empieza a ciegas.
 
-**Última actualización:** 2026-11-18, 18:30 (hora de Guatemala)
+**Última actualización:** 2026-11-18, 19:20 (hora de Guatemala)
 **Actualizado por:** sesión de cimientos (Claude + José Julián)
 
 ---
@@ -19,7 +19,7 @@ imagen en el dataset.**
 | Fase | Estado |
 |---|---|
 | 0 · Cimientos: repo, docs, contratos | ✅ Completada |
-| 1 · Camino completo de punta a punta (meta: miércoles 18) | ⬜ No iniciada |
+| 1 · Camino completo de punta a punta (meta: miércoles 18) | 🟡 Pipeline de ML completo y probado; falta la app web |
 | 2 · Modelo bueno + interfaz completa (meta: jueves 19) | ⬜ No iniciada |
 | 3 · QA, simulacros, ensayo, congelar (meta: viernes 20) | ⬜ No iniciada |
 | 4 · Presentación (sábado 21, 07:00) | ⬜ |
@@ -39,6 +39,19 @@ imagen en el dataset.**
 - [x] `docs/EMPIEZA-AQUI.md`: onboarding del equipo y configuración de su agente
 - [x] `docs/INSTRUCCIONES-FOTOS.md`: protocolo completo de captura
 - [x] Estructura de carpetas de captura creada en `data/raw/real/` para los cuatro
+- [x] **Pipeline de ML completo e implementado**, no solo esbozado:
+      `preprocess.py` (7 pasos deterministas, portables a TS), `synth.py` (generador
+      con 8 fondos, iluminación, perspectiva y degradación, más 8 subclases de
+      negativos), `dataset.py` (splits agrupados, manifiesto, verificación anti-fuga),
+      `model.py` (CNN de 3 cabezas, 541 629 parámetros), `train.py` (dos etapas,
+      early stopping), `calibrate.py` (temperatura + umbrales con la utilidad de la
+      rúbrica), `evaluate.py` (métricas, desgloses y figuras), `export_onnx.py`
+- [x] **99 tests automatizados en verde** (`cd ml && pytest`)
+- [x] **Corrida piloto de punta a punta verificada**: 3 680 imágenes sintéticas →
+      entrenamiento → calibración → evaluación → ONNX de 2,21 MB en un solo archivo,
+      verificado contra PyTorch (max|diff| 3,3e-06, 100% de coincidencia en 200 muestras)
+- [x] `web/public/models/` con un modelo cargable: el frontend ya puede arrancar
+- [x] `ml/notebooks/entrenar_en_colab.ipynb` para la corrida real con GPU
 
 ## Siguiente paso concreto
 
@@ -53,15 +66,16 @@ imagen en el dataset.**
 3. **Usuarios de GitHub** de Jorge, Imri y Jean Marco, para agregarlos como colaboradores
    (el repo es público, pero para pushear hace falta invitación).
 
-**Después, el miércoles, por orden de dependencia:**
+**Lo siguiente en código, por orden de dependencia:**
 
-3. `ml/src/maya/labels.py` → tests en verde (es la base de todo lo demás).
-4. `ml/src/maya/synth.py` → generador sintético v1.
-5. `ml/src/maya/preprocess.py` v1 → fixtures de referencia para el test de paridad.
-6. `ml/src/maya/dataset.py` → splits agrupados y manifiesto.
-7. `ml/src/maya/model.py` + `train.py` → primera corrida en Colab.
-8. `export_onnx.py` → el primer `.onnx` en `web/public/models/`.
-9. Scaffold de Next.js + `preprocess.ts` + primera predicción en el navegador.
+3. **Corrida real en Colab con GPU** (`ml/notebooks/entrenar_en_colab.ipynb`): dataset
+   completo (800 por clase + 10 000 negativos), etapa A, etapa B con las fotos reales,
+   calibración y export. Es lo único que falta del lado del modelo.
+4. **Scaffold de Next.js** y carga del `.onnx` que ya está en `web/public/models/`.
+   No hace falta esperar al modelo bueno: el piloto carga y predice.
+5. **`web/lib/preprocess.ts`**: port de los 7 pasos de `preprocess.py`. Generar antes
+   los fixtures con `python -m maya.preprocess --fixtures tests/fixtures`.
+6. **Test de paridad** `npm run test:parity` y despliegue en Vercel.
 
 ## Bloqueos y riesgos abiertos
 
@@ -73,6 +87,8 @@ imagen en el dataset.**
 | Proyecto de Vercel sin crear | 🟡 Pendiente | Jean Marco |
 | Proyecto de Neon sin crear | 🟡 Pendiente | Jean Marco |
 | Divergencia entre `preprocess.py` y `preprocess.ts` | 🟢 Mitigado por diseño (V1 trivial + test de paridad) | Jean Marco |
+| El modelo no rechaza hojas en blanco (0% en el piloto) | 🟡 Mitigado a medias: guarda de rango plano en el preprocesamiento + peso de `vacio` subido de 4% a 10%. **Verificar en la corrida real** | José Julián |
+| Contar puntos es más difícil que contar barras (piloto: 2–3 puntos ~50%, 0 puntos 97%) | 🟡 Esperable con 120 imágenes por clase; revisar tras la corrida completa | José Julián |
 
 ## Métricas actuales
 
@@ -90,6 +106,31 @@ corrida real guardada en `ml/runs/`.**
 | Simulacro con persona ajena | ≥ 13/15 | — |
 
 ## Bitácora
+
+### 2026-11-18 · Pipeline de ML completo y probado de punta a punta
+Se implementaron los ocho módulos de `ml/src/maya/` y se corrió el camino completo con un
+dataset piloto reducido (3 680 imágenes, 12 épocas en CPU) para verificar que todo encaja,
+no solo que compila. Resultados del piloto, que **no son los del proyecto** sino la prueba
+de que la tubería funciona: exactitud global 72,1%, en válidas 66,1%, rechazo correcto 82,0%,
+falso rechazo 8,7%. El ONNX salió de 2,21 MB y pasó la verificación contra PyTorch.
+
+Tres hallazgos del piloto que cambiaron el código:
+
+1. **El escalado por caja envolvente era incorrecto.** Normalizar el glifo a una fracción
+   del lienzo convertía un "1" —que es un solo punto— en un círculo que llenaba la imagen,
+   y un "13" en algo diminuto. Ahora la escala se deriva del largo natural de barra, que es
+   la unidad con la que una persona escribe. 
+2. **Los fondos salían con los canales invertidos**: la madera se veía azul y la cartulina
+   celeste, porque el pipeline mezclaba orden BGR y RGB. Todo quedó en RGB.
+3. **El rechazo de imágenes vacías era del 0%.** La causa está en el preprocesamiento: al
+   estirar el contraste de una hoja en blanco, el grano del papel se amplifica hasta parecer
+   trazos. Se añadió una guarda de rango plano y se subió el peso de `vacio` en la mezcla de
+   negativos. Queda como riesgo abierto hasta verificarlo en la corrida real.
+
+Nota de entorno: `download.pytorch.org` está bloqueado por el proxy; torch se instala desde
+PyPI. El export a ONNX necesita `onnxscript` (ya está en `requirements.txt`) y hay que pasarle
+`external_data=False`, porque el exportador nuevo de torch saca los pesos a un archivo aparte
+y servir dos archivos al navegador es una fuente de fallos innecesaria.
 
 ### 2026-11-18 · Primeras fotos reales
 José entregó 42 fotos: los 19 números en dos rondas (lapicero y marcador), más el cero maya y el

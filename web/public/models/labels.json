@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "num_clases": 20,
+  "indice_no_valido": 19,
+  "num_barras": 4,
+  "num_puntos": 5,
+  "etiquetas": [
+    "maya_01",
+    "maya_02",
+    "maya_03",
+    "maya_04",
+    "maya_05",
+    "maya_06",
+    "maya_07",
+    "maya_08",
+    "maya_09",
+    "maya_10",
+    "maya_11",
+    "maya_12",
+    "maya_13",
+    "maya_14",
+    "maya_15",
+    "maya_16",
+    "maya_17",
+    "maya_18",
+    "maya_19",
+    "no_valido"
+  ],
+  "valores": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    null
+  ],
+  "composicion": {
+    "1": {
+      "barras": 0,
+      "puntos": 1
+    },
+    "2": {
+      "barras": 0,
+      "puntos": 2
+    },
+    "3": {
+      "barras": 0,
+      "puntos": 3
+    },
+    "4": {
+      "barras": 0,
+      "puntos": 4
+    },
+    "5": {
+      "barras": 1,
+      "puntos": 0
+    },
+    "6": {
+      "barras": 1,
+      "puntos": 1
+    },
+    "7": {
+      "barras": 1,
+      "puntos": 2
+    },
+    "8": {
+      "barras": 1,
+      "puntos": 3
+    },
+    "9": {
+      "barras": 1,
+      "puntos": 4
+    },
+    "10": {
+      "barras": 2,
+      "puntos": 0
+    },
+    "11": {
+      "barras": 2,
+      "puntos": 1
+    },
+    "12": {
+      "barras": 2,
+      "puntos": 2
+    },
+    "13": {
+      "barras": 2,
+      "puntos": 3
+    },
+    "14": {
+      "barras": 2,
+      "puntos": 4
+    },
+    "15": {
+      "barras": 3,
+      "puntos": 0
+    },
+    "16": {
+      "barras": 3,
+      "puntos": 1
+    },
+    "17": {
+      "barras": 3,
+      "puntos": 2
+    },
+    "18": {
+      "barras": 3,
+      "puntos": 3
+    },
+    "19": {
+      "barras": 3,
+      "puntos": 4
+    }
+  },
+  "subclases_no_valido": [
+    "cero_maya",
+    "mayor_19",
+    "casi_valido",
+    "multiples",
+    "digitos_arabigos",
+    "romanos",
+    "otros_sistemas",
+    "texto",
+    "objetos",
+    "personas",
+    "paisajes",
+    "dibujos",
+    "vacio"
+  ]
+}
