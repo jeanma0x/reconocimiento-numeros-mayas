@@ -121,13 +121,23 @@ export function necesitaInversion(g: Float64Array, alto: number, ancho: number):
  * Si el rango es menor a RANGO_MINIMO la imagen se considera plana y se devuelve en
  * negro: en una hoja en blanco el único "contenido" es el grano del papel, y
  * estirarlo lo convierte en una textura que la red lee como trazos.
+ *
+ * OJO con el caso contrario: cuando la tinta cubre menos del 1% de los píxeles —dos
+ * puntos dibujados en un lienzo grande, o un número pequeño en una hoja fotografiada
+ * de lejos— los percentiles no la ven y el rango sale cero. Declarar eso "plano"
+ * borraría el dibujo entero, así que se reintenta con el rango completo.
  */
 export function estirarContraste(g: Float64Array): Float64Array {
   const ordenado = Float64Array.from(g).sort();
-  const lo = percentil(ordenado, PCT_BAJO);
-  const hi = percentil(ordenado, PCT_ALTO);
+  let lo = percentil(ordenado, PCT_BAJO);
+  let hi = percentil(ordenado, PCT_ALTO);
+  if (hi - lo < RANGO_MINIMO) {
+    // Tinta escasa: los percentiles no la detectan, se usa el rango completo
+    lo = ordenado[0];
+    hi = ordenado[ordenado.length - 1];
+  }
   const out = new Float64Array(g.length);
-  if (hi - lo < RANGO_MINIMO) return out; // todo en cero
+  if (hi - lo < RANGO_MINIMO) return out; // ahora sí, imagen plana
   const rango = hi - lo;
   for (let i = 0; i < g.length; i++) {
     out[i] = Math.min(1, Math.max(0, (g[i] - lo) / rango));

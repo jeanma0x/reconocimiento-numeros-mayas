@@ -76,7 +76,11 @@ def glifo(barras: int, puntos: int, rng) -> np.ndarray:
     """Máscara recortada de un número maya: puntos arriba, barras abajo."""
     T = rng.integers(10, 26)                       # grosor de barra
     Lb = rng.integers(150, 230)                    # largo de barra
-    R = int(T * rng.uniform(0.55, 1.15))           # radio de punto
+    # El rango de radio de punto es ancho a propósito. Una persona que dibuja con el
+    # dedo o el mouse da un toque cuyo diámetro es el grosor del trazo, o sea R ≈ T/2;
+    # el extremo alto cubre a quien pinta puntos gordos. Si el rango fuera estrecho, la
+    # red usaría el tamaño absoluto del punto como pista y fallaría con medio mundo.
+    R = int(T * rng.uniform(0.40, 1.25))           # radio de punto
     R = max(5, R)
     G = int(T * rng.uniform(0.7, 1.8))             # separación entre barras
     D = int(T * rng.uniform(0.9, 2.2))             # separación puntos-barras

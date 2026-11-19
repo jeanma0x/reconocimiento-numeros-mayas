@@ -3,7 +3,7 @@
 > **Este es el archivo más importante del repositorio.** Se lee al empezar cada sesión de trabajo
 > y se actualiza al terminarla. Si está desactualizado, la siguiente sesión empieza a ciegas.
 
-**Última actualización:** 2026-11-18, 22:05 (hora de Guatemala)
+**Última actualización:** 2026-11-18, 22:35 (hora de Guatemala)
 **Actualizado por:** sesión de cimientos (Claude + José Julián)
 
 ---
@@ -101,7 +101,7 @@ imagen en el dataset.**
 | Proyecto de Vercel sin crear | 🟡 Pendiente | Jean Marco |
 | Proyecto de Neon sin crear | 🟡 Pendiente | Jean Marco |
 | Divergencia entre `preprocess.py` y `preprocess.ts` | 🟢 Mitigado por diseño (V1 trivial + test de paridad) | Jean Marco |
-| El modelo piloto cuenta mal los puntos (4 de 4 dibujos fallados) | 🔴 Esperable con 120 img/clase y 12 épocas. Se mide de nuevo tras la corrida real | José Julián |
+| El modelo piloto cuenta mal los puntos | 🔴 Tras arreglar los dos defectos de preprocesamiento sigue en 2 de 7 dibujos correctos. Es capacidad del modelo: 120 img/clase y 12 épocas contra 800 y 60 de la corrida real. **No se toca más hasta entrenar de verdad** | José Julián |
 | El modelo piloto no rechaza ruido ni hojas en blanco | 🔴 Confirmado en el navegador: una imagen de ruido puro se reconoce como "1" con 34% de confianza. Con `tau`=0,05 ninguna de las cuatro capas dispara. **Hay que volver a evaluarlo con el modelo real**: el piloto vio 1 400 negativos, el real verá 10 000 | José Julián |
 | El modelo no rechaza hojas en blanco (0% en el piloto) | 🟡 Mitigado a medias: guarda de rango plano en el preprocesamiento + peso de `vacio` subido de 4% a 10%. **Verificar en la corrida real** | José Julián |
 | Contar puntos es más difícil que contar barras (piloto: 2–3 puntos ~50%, 0 puntos 97%) | 🟡 Esperable con 120 imágenes por clase; revisar tras la corrida completa | José Julián |
@@ -147,6 +147,35 @@ Nota de entorno: `download.pytorch.org` está bloqueado por el proxy; torch se i
 PyPI. El export a ONNX necesita `onnxscript` (ya está en `requirements.txt`) y hay que pasarle
 `external_data=False`, porque el exportador nuevo de torch saca los pesos a un archivo aparte
 y servir dos archivos al navegador es una fuente de fallos innecesaria.
+
+### 2026-11-18 · Dos defectos del preprocesamiento, encontrados dibujando
+Más pruebas a mano destaparon dos defectos reales, los dos introducidos ese mismo día.
+Ninguno lo habría encontrado una métrica: hicieron falta el panel de depuración y mirar
+el tensor.
+
+**1. La guarda de rango plano borraba los dibujos con poca tinta.** Al dibujar dos puntos,
+el tensor que llegaba a la red era **completamente negro**. La guarda que se añadió para
+rechazar hojas en blanco usa los percentiles 1 y 99; cuando la tinta cubre menos del 1% de
+los píxeles —dos puntos en un lienzo grande, o un número pequeño en una hoja fotografiada
+de lejos— los percentiles no la ven, el rango sale cero y la imagen se anula entera.
+Corregido: si los percentiles no detectan nada, se reintenta con el rango completo antes
+de dar la imagen por vacía. **Esto también afectaba a fotos**, no solo al lienzo.
+
+**2. El recorte del lienzo agrandaba los números de solo puntos.** El recorte ajustado a la
+caja de la tinta dejaba el glifo ocupando ~70% del encuadre. Para los números con barras da
+igual, porque ahí el ancho de la tinta coincide con la unidad de referencia; pero un "2" son
+dos puntos que en el entrenamiento ocupan ~19% del marco, porque la escala se deriva del
+largo natural de barra aunque no haya barras. Por eso **el 2 fallaba las tres veces que se
+probó, mientras el 11 acertaba con 85%**.
+
+Corregido con un criterio, no a ojo: el lado del recorte es 18 veces el grosor del trazo.
+Sale de dos restricciones medidas sobre el propio generador (una barra mide ~11 grosores y
+debe ocupar ~49%; un punto dibujado mide un grosor y debe ocupar ~7%), y 18 es el punto
+medio. La diferencia restante se cierra del otro lado: el generador ahora sortea el radio
+del punto en `T*[0.40, 1.25]` en vez de `T*[0.55, 1.15]`, porque quien dibuja con el dedo da
+un toque de un grosor de diámetro, o sea R ≈ T/2, que antes quedaba fuera del rango.
+
+La paridad Python/TypeScript sigue exacta (0,0) tras ambos cambios.
 
 ### 2026-11-18 · Pruebas a mano: tres arreglos reales
 José probó la aplicación dibujando números y falló en cuatro de cuatro. El diagnóstico dio tres

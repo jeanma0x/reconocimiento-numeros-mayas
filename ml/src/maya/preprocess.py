@@ -91,15 +91,22 @@ def estirar_contraste(gris: np.ndarray) -> np.ndarray:
     estirarlo lo convierte en una textura de rango completo que la red lee como
     trazos: en el piloto, el rechazo de imágenes vacías fue del 0% por esta causa.
 
-    La guarda es una mitigación parcial, no la solución: solo atrapa hojas con poco
-    grano. Una hoja en blanco con sombra o con grano fuerte supera el umbral igual.
-    El arreglo de fondo es que la red vea suficientes ejemplos `vacio` en el
-    entrenamiento (su peso en la mezcla de negativos subió de 4% a 10%).
+    OJO con el caso contrario: cuando la tinta cubre menos del 1% de los píxeles
+    —dos puntos dibujados en un lienzo grande, o un número pequeño en una hoja
+    fotografiada de lejos— los percentiles no la ven y el rango sale cero. Declarar
+    eso "plano" borraría el dibujo entero. Por eso, si los percentiles no detectan
+    nada, se reintenta con el rango completo antes de dar la imagen por vacía.
+
+    La guarda sigue siendo una mitigación parcial: una hoja en blanco con sombra
+    supera el umbral igual. El arreglo de fondo es que la red vea suficientes
+    ejemplos `vacio` en el entrenamiento.
     """
     lo = float(np.percentile(gris, PCT_BAJO))
     hi = float(np.percentile(gris, PCT_ALTO))
     if hi - lo < RANGO_MINIMO:
-        return np.zeros_like(gris)
+        lo, hi = float(gris.min()), float(gris.max())   # tinta escasa: rango completo
+    if hi - lo < RANGO_MINIMO:
+        return np.zeros_like(gris)                      # ahora sí, imagen plana
     return np.clip((gris - lo) / (hi - lo), 0.0, 1.0)
 
 

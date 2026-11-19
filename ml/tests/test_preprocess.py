@@ -77,3 +77,17 @@ def test_un_trazo_tenue_si_sobrevive_a_la_guarda():
     img = np.full((240, 180, 3), 232, np.uint8)
     img[100:130, 40:140] = 150          # trazo gris claro, contraste real
     assert P.preparar(img).max() > 0.8
+
+
+def test_tinta_escasa_no_se_borra():
+    """Dos puntos pequeños en un lienzo grande: la tinta cubre menos del 1% de los
+    píxeles, así que los percentiles 1 y 99 no la ven. Si la guarda de rango plano
+    se aplicara sin reintentar con el rango completo, el dibujo se borraría entero
+    y la red recibiría una imagen negra."""
+    img = np.full((520, 520, 3), 255, np.uint8)
+    for cx in (230, 290):
+        img[253:267, cx - 7:cx + 7] = 20
+    cobertura = float((img[:, :, 0] < 128).mean())
+    assert cobertura < 0.01, f"el caso debe tener menos del 1% de tinta, tiene {cobertura:.2%}"
+    t = P.preparar(img)
+    assert t.max() > 0.8, "la tinta escasa se perdió en el preprocesamiento"

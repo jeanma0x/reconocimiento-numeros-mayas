@@ -4,7 +4,28 @@ import { useEffect, useRef, useState } from "react";
 
 const ANCHO = 680;
 const ALTO = 520;
-const MARGEN = 0.18; // margen alrededor de la tinta al recortar, en fracción del lado
+/**
+ * Lado del recorte, en múltiplos del grosor del trazo.
+ *
+ * En el generador sintético la escala de un glifo se deriva del largo natural de
+ * barra, no de su caja envolvente, y el grosor de barra es ~1/11 de ese largo. Así
+ * que el grosor del trazo ES la unidad de medida del dibujo, igual que en el
+ * entrenamiento.
+ *
+ * El valor sale de dos restricciones del entrenamiento, no de probar a ojo:
+ *   - un glifo con barras ocupa entre el 26% y el 72% del encuadre, media 49%.
+ *     Como una barra mide ~11 grosores, eso pide un lado de ~22 grosores.
+ *   - un punto ocupa ~7% del encuadre. Quien dibuja da un toque de un grosor de
+ *     diámetro, lo que pide un lado de ~14 grosores.
+ * 18 es el punto medio. La diferencia restante se cierra del otro lado: el generador
+ * ahora sortea el radio del punto en un rango más amplio.
+ *
+ * Recortar a la caja de la tinta, como se hacía antes, dejaba todo en ~70%: para los
+ * números con barras daba igual, pero a los de solo puntos (1 a 4) los agrandaba
+ * hasta un tamaño que la red nunca vio, y por eso el 2 fallaba siempre.
+ */
+const LADO_POR_GROSOR = 18;
+const HOLGURA = 1.15; // si el trazo es más grande que eso, se amplía el recorte
 
 /**
  * Lienzo para dibujar con mouse o dedo. Es la vía más confiable para las pruebas
@@ -99,20 +120,25 @@ export default function LienzoDibujo({ onListo }: { onListo: (blob: Blob) => voi
     }
     if (x1 < 0) return; // no hay tinta
 
-    const lado = Math.max(x1 - x0, y1 - y0);
-    const m = Math.round(lado * MARGEN) + grosor;
-    x0 = Math.max(0, x0 - m);
-    y0 = Math.max(0, y0 - m);
-    x1 = Math.min(c.width - 1, x1 + m);
-    y1 = Math.min(c.height - 1, y1 + m);
+    const anchoTinta = x1 - x0 + 1;
+    const altoTinta = y1 - y0 + 1;
+    const lado = Math.round(
+      Math.max(LADO_POR_GROSOR * grosor, Math.max(anchoTinta, altoTinta) * HOLGURA),
+    );
+    const centroX = (x0 + x1) / 2;
+    const centroY = (y0 + y1) / 2;
+    const sx = Math.round(centroX - lado / 2);
+    const sy = Math.round(centroY - lado / 2);
 
     const recorte = document.createElement("canvas");
-    recorte.width = x1 - x0 + 1;
-    recorte.height = y1 - y0 + 1;
+    recorte.width = lado;
+    recorte.height = lado;
     const rctx = recorte.getContext("2d")!;
+    // Blanco primero: si el recorte se sale del lienzo, lo que sobra queda en
+    // blanco en lugar de transparente.
     rctx.fillStyle = "#ffffff";
-    rctx.fillRect(0, 0, recorte.width, recorte.height);
-    rctx.drawImage(c, x0, y0, recorte.width, recorte.height, 0, 0, recorte.width, recorte.height);
+    rctx.fillRect(0, 0, lado, lado);
+    rctx.drawImage(c, sx, sy, lado, lado, 0, 0, lado, lado);
     recorte.toBlob((b) => b && onListo(b), "image/png");
   };
 
@@ -150,8 +176,8 @@ export default function LienzoDibujo({ onListo }: { onListo: (blob: Blob) => voi
         </label>
       </div>
       <p className="pista">
-        Dibujá los puntos arriba y las barras abajo. Al reconocer se recorta
-        automáticamente alrededor del trazo.
+        Dibujá los puntos arriba y las barras abajo. El grosor del trazo marca la
+        escala: subilo para trazos gruesos y bajalo para finos, como harías en papel.
       </p>
     </>
   );
