@@ -3,7 +3,7 @@
 > **Este es el archivo más importante del repositorio.** Se lee al empezar cada sesión de trabajo
 > y se actualiza al terminarla. Si está desactualizado, la siguiente sesión empieza a ciegas.
 
-**Última actualización:** 2026-11-17, 23:15 (hora de Guatemala)
+**Última actualización:** 2026-11-18, 18:30 (hora de Guatemala)
 **Actualizado por:** sesión de cimientos (Claude + José Julián)
 
 ---
@@ -67,7 +67,7 @@ imagen en el dataset.**
 
 | Riesgo | Estado | Responsable |
 |---|---|---|
-| Fotos reales insuficientes para el jueves | 🔴 Abierto, 0 de ~336 | Todos |
+| Fotos reales insuficientes para el jueves | 🟡 42 de ~336. Solo José entregó, y le faltan variedad y 13 negativos | Todos |
 | Carpeta de Drive sin crear | 🔴 Abierto | José Julián |
 | Equipo sin invitar al repo (faltan sus usuarios de GitHub) | 🟡 Pendiente | José Julián |
 | Proyecto de Vercel sin crear | 🟡 Pendiente | Jean Marco |
@@ -90,6 +90,17 @@ corrida real guardada en `ml/runs/`.**
 | Simulacro con persona ajena | ≥ 13/15 | — |
 
 ## Bitácora
+
+### 2026-11-18 · Primeras fotos reales
+José entregó 42 fotos: los 19 números en dos rondas (lapicero y marcador), más el cero maya y el
+20 posicional en ambos estilos. Revisadas una por una contra hojas de contacto: **las 19 formas
+están correctas** en las dos tandas y el orden de captura fue idéntico (celda 1 = cero, 2–20 =
+números 1–19, celda 21 = el 20). Organizadas en `data/raw/real/jose/` y registradas en
+`data/manifest.csv` con su sha256: 42 archivos, 0 duplicados.
+
+Pendiente de esta entrega: falta variedad (todo está sobre el mismo papel rayado, con luz y
+distancia parecidas) y faltan 13 de los 15 negativos. Las hojas de contacto quedaron en
+`data/raw/real/jose/_hojas_contacto/` para la revisión cruzada que pide `03-DATASET.md`.
 
 ### 2026-11-17 · Cimientos
 Se revisó el PDF del proyecto y el notebook de referencia del instructor
