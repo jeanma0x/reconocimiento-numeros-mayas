@@ -15,20 +15,37 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install -r ml/requirements.txt
+      # Solo lo que los tests necesitan. Instalar requirements.txt completo traería
+      # torch (cientos de MB) para unos tests que no lo importan.
+      - run: pip install numpy "opencv-python-headless>=4.9" Pillow pytest
       - run: cd ml && pytest
 
   web:
-    name: Build y paridad del preprocesamiento
+    name: Build, paridad e inferencia
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: web/package-lock.json
+      - run: pip install numpy "opencv-python-headless>=4.9" Pillow
+
+      # Los fixtures NO se versionan (serían decenas de MB): se generan con el
+      # mismo Python que define la referencia, justo antes de compararlo con
+      # TypeScript. Si se versionaran, podrían quedar desfasados del código.
+      - name: Generar los tensores de referencia con Python
+        run: cd ml && PYTHONPATH=src python -m maya.preprocess --fixtures ../web/fixtures
+
       - run: cd web && npm ci
       - run: cd web && npm run build
-      # Si la paridad del preprocesamiento falla, no se despliega (invariante I4)
+
+      # Si Python y TypeScript divergen, el modelo recibiría en producción algo
+      # distinto de lo que vio al entrenar. No se despliega (invariante I4).
       - run: cd web && npm run test:parity
+      - run: cd web && npm run test:inference
