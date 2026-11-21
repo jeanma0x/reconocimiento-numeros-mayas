@@ -655,8 +655,8 @@ function Errores() {
         <F n={1} className="fallo">
           <div className="dibujo"><GlifoMaya valor={20} ancho={96} /></div>
           <h3>Cuatro barras</h3>
-          
-          <div className="hicimos"><b>Lo que medimos</b>Rechaza {Math.round(D.rechazoCasi / 10)} de cada 10 casi-números (antes 7).</div>
+          <p>No existe en el sistema (llega al 19). Con trazos muy finos, a veces la red lo lee como un 15–19 en vez de rechazarlo.</p>
+          <div className="hicimos"><b>Lo que hicimos</b>Entrenarla con 4 barras como «no válido». Ahora rechaza {Math.round(D.rechazoCasi / 10)} de cada 10 casi-números (antes 7).</div>
         </F>
         <F n={2} className="fallo">
           <div className="dibujo">
