@@ -48,7 +48,52 @@ function Portada() {
   );
 }
 
-/* ───────────── 2 · El reto ───────────── */
+/* ───────────── 2 · Qué es una CNN (introducción) ───────────── */
+const COLS = [6, 7, 7, 3];
+const CX = [12, 38, 64, 90];
+const ny = (i: number, n: number) => 30 - ((n - 1) * 5.2) / 2 + i * 5.2;
+function IntroCNN() {
+  const lineas: React.ReactNode[] = [];
+  for (let c = 0; c < COLS.length - 1; c++)
+    for (let i = 0; i < COLS[c]; i++)
+      for (let j = 0; j < COLS[c + 1]; j++)
+        lineas.push(
+          <line key={`${c}-${i}-${j}`} className="enlace" style={{ animationDelay: `${c * 0.8 + ((i + j) % 5) * 0.05}s` }} x1={CX[c]} y1={ny(i, COLS[c])} x2={CX[c + 1]} y2={ny(j, COLS[c + 1])} />,
+        );
+  const nombres = ["Imagen", "Filtros", "Formas", "Respuesta"];
+  return (
+    <div className="dos intro">
+      <div>
+        <Cabeza k="Antes de empezar" sub={<>Un programa que <b>aprende a reconocer imágenes</b> viendo miles de ejemplos, sin que nadie le escriba las reglas.</>}>
+          ¿Qué es una <em>CNN</em>?
+        </Cabeza>
+        <F n={1} className="tres-pasos">
+          <div><b className="jade">1 · Mira</b><span>filtros que buscan trazos</span></div>
+          <div><b className="azul">2 · Combina</b><span>capas que arman formas</span></div>
+          <div><b className="ocre">3 · Decide</b><span>entrega una respuesta</span></div>
+        </F>
+        <F n={2}>
+          <p className="pregunta">No le dimos reglas. Le dimos ejemplos y aprendió sola.</p>
+        </F>
+      </div>
+      <div className="red" aria-hidden="true">
+        <svg viewBox="0 0 102 62">
+          {lineas}
+          {COLS.map((n, c) =>
+            Array.from({ length: n }).map((_, i) => (
+              <circle key={`${c}-${i}`} className="neurona" style={{ animationDelay: `${c * 0.8 + i * 0.06}s` }} cx={CX[c]} cy={ny(i, n)} r="1.9" />
+            )),
+          )}
+          {nombres.map((t, c) => (
+            <text key={t} x={CX[c]} y="58" textAnchor="middle" className="nom-red">{t}</text>
+          ))}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────── 3 · El reto ───────────── */
 function Reto() {
   return (
     <>
@@ -75,8 +120,8 @@ function Reto() {
           <small>concha · fuera del reto</small>
         </div>
       </F>
-      <F n={2} className="suma">
-        <span className="ficha">3 barras</span>+<span className="ficha">4 puntos</span>=
+      <F n={2} className="cuenta">
+        <span className="pastilla">3 barras</span>+<span className="pastilla">4 puntos</span>=
         <span className="res">5×3 + 4 = 19</span>
         <GlifoMaya valor={19} ancho={110} className="glifo" />
       </F>
@@ -120,7 +165,7 @@ function Convolucion({ paso }: { paso: number }) {
       setK(0);
       return;
     }
-    const t = setInterval(() => setK((x) => (x >= OW * OH + 26 ? 0 : x + 1)), 48);
+    const t = setInterval(() => setK((x) => (x >= OW * OH + 70 ? 0 : x + 1)), 48);
     return () => clearInterval(t);
   }, [paso]);
   const pos = Math.min(k, OW * OH - 1);
@@ -129,8 +174,8 @@ function Convolucion({ paso }: { paso: number }) {
   const celda = "calc(var(--u) * 2.15)";
   return (
     <>
-      <Cabeza k="Qué es una CNN">
-        Una red que <em>aprende a mirar</em>
+      <Cabeza k="El filtro">
+        Cómo <em>mira</em> una CNN
       </Cabeza>
       <div className="escena">
         <div>
@@ -140,30 +185,34 @@ function Convolucion({ paso }: { paso: number }) {
               <div className="ventana" style={{ left: `calc(${wx} * (${celda} + 2px) + 3px)`, top: `calc(${wy} * (${celda} + 2px) + 3px)` }} />
             )}
           </div>
-          <div className="etq">La foto: una cuadrícula de números</div>
+          <div className="leyenda">La foto: una cuadrícula de números</div>
         </div>
-        <F n={1} className="filtro-col">
+        <F n={1} className="filtro-col esc-fil">
           <div className="filtro" aria-hidden="true">
             {KERNEL.flat().map((v, i) => (
-              <span key={i} className={v > 0 ? "p" : v < 0 ? "n" : "z"}>
+              <span key={i} className={v > 0 ? "cp" : v < 0 ? "cn" : "cz"}>
                 {v > 0 ? "+1" : v}
               </span>
             ))}
           </div>
-          <div className="etq">Un filtro, como una linterna</div>
+          <div className="leyenda">Un filtro, como una linterna</div>
         </F>
-        <F n={1}>
+        <F n={1} className="esc-mapa">
           <div className="pix mapa" style={{ gridTemplateColumns: `repeat(${OW}, ${celda})` }}>
             {RESP.map((r, i) => (
               <i key={i} className={i >= k ? "sinval" : r > 0 ? "pos" : r < 0 ? "neg" : "sinval"} style={i < k && r !== 0 ? { opacity: Math.min(1, Math.abs(r) / 3 + 0.25) } : undefined} />
             ))}
           </div>
-          <div className="etq">Dónde encontró lo que busca</div>
+          <div className="leyenda">Dónde encontró lo que busca</div>
+          <div className="claves">
+            <span><i className="v" />borde de arriba</span>
+            <span><i className="r" />borde de abajo</span>
+          </div>
         </F>
       </div>
       <F n={2}>
         <p className="sub" style={{ maxWidth: "none", textAlign: "center" }}>
-          Este filtro busca <b>bordes de arriba</b>. La red aprende sola cientos de filtros: líneas, curvas, puntos, barras.
+          Cada cuadro compara con el filtro y se pinta: <b>verde</b> si hay un borde de arriba, <b>rojo</b> si hay uno de abajo. La red aprende sola cientos de filtros como este.
         </p>
       </F>
     </>
@@ -218,6 +267,9 @@ function Flujo({ paso }: { paso: number }) {
           </div>
         ))}
       </div>
+      <F n={3} className="detalle-red">
+        <b>Dentro de «La red mira»:</b> 4 bloques de filtros, de líneas simples a las partes del número. Lo vemos en detalle en la diapositiva 6.
+      </F>
       <F n={6}>
         <span className="sello">Todo ocurre en tu navegador · sin servidor · sin internet</span>
       </F>
@@ -238,10 +290,10 @@ function Pila({ n, lado, i }: { n: number; lado: number; i: number }) {
 }
 function PorDentro() {
   const capas = [
-    { n: 2, lado: 8, t: "Líneas", d: "bordes y trazos" },
-    { n: 3, lado: 6.4, t: "Formas", d: "curvas y esquinas" },
-    { n: 4, lado: 5, t: "Partes", d: "puntos y barras" },
-    { n: 5, lado: 3.5, t: "Posición", d: "dónde está cada parte" },
+    { n: 2, lado: 6.6, t: "Líneas", d: "bordes y trazos" },
+    { n: 3, lado: 5.4, t: "Formas", d: "curvas y esquinas" },
+    { n: 4, lado: 4.3, t: "Partes", d: "puntos y barras" },
+    { n: 5, lado: 3.1, t: "Posición", d: "dónde está cada parte" },
   ];
   return (
     <>
@@ -249,13 +301,26 @@ function PorDentro() {
         De líneas a <em>números</em>
       </Cabeza>
       <F n={1} className="capas">
+        <div className="capa entrada">
+          <img src={`${IMG}/pre-6-64.png`} alt="Imagen de 64 por 64 píxeles que entra a la red" />
+          <h3>Imagen</h3>
+          <p>64 × 64 píxeles</p>
+        </div>
         {capas.map((c, i) => (
-          <div key={c.t} className="capa">
-            <Pila n={c.n} lado={c.lado} i={i} />
-            <h3>{c.t}</h3>
-            <p>{c.d}</p>
+          <div key={c.t} style={{ display: "contents" }}>
+            <span className="sig" aria-hidden="true">→</span>
+            <div className="capa">
+              <Pila n={c.n} lado={c.lado} i={i} />
+              <h3>{c.t}</h3>
+              <p>{c.d}</p>
+            </div>
           </div>
         ))}
+      </F>
+      <F n={1}>
+        <p className="nota" style={{ textAlign: "center", marginTop: 8 }}>
+          Cada cuadro es un filtro que busca algo distinto. Cada bloque ve «más lejos» que el anterior y usa más filtros.
+        </p>
       </F>
       <F n={2} className="tres">
         <div className="cab"><small>Pregunta 1</small><div className="q">¿Qué número es?</div><div className="r">14</div></div>
@@ -263,7 +328,7 @@ function PorDentro() {
         <div className="cab"><small>Pregunta 3</small><div className="q">¿Cuántos puntos?</div><div className="r">4</div></div>
       </F>
       <F n={3} className="verif">
-        5 × 2 + 4 = 14 <span className="ok">COINCIDEN → respuesta segura</span>
+        5 × 2 + 4 = 14 <span className="ok-p">COINCIDEN → respuesta segura</span>
       </F>
     </>
   );
@@ -309,10 +374,15 @@ function Datos({ paso }: { paso: number }) {
         <p className="nota" style={{ marginBottom: 10 }}>
           Una misma imagen nunca está en dos grupos: <b>nada de copiar el examen</b>.
         </p>
-        <div className="barra">
-          <span style={{ flex: 82, background: "var(--jade)" }}>Entrena</span>
-          <span style={{ flex: 11, background: "var(--azul)" }}>Valida</span>
-          <span style={{ flex: 7, background: "var(--ocre)" }}>Prueba</span>
+        <div className="tramos">
+          <span style={{ flex: 82, background: "var(--jade)" }}>82 %</span>
+          <span style={{ flex: 11, background: "var(--azul)" }}>11 %</span>
+          <span style={{ flex: 7, background: "var(--ocre)" }}>7 %</span>
+        </div>
+        <div className="claves-reparto">
+          <span><i style={{ background: "var(--jade)" }} /><b>Entrena</b> aprende de estas</span>
+          <span><i style={{ background: "var(--azul)" }} /><b>Valida</b> se ajusta mientras aprende</span>
+          <span><i style={{ background: "var(--ocre)" }} /><b>Prueba</b> examen final</span>
         </div>
       </F>
     </>
@@ -333,7 +403,7 @@ function Preparar({ paso }: { paso: number }) {
       <Cabeza k="Preparar la imagen" sub={<>La red recibe <b>siempre lo mismo</b>: da igual la cámara o la hoja.</>}>
         Limpiar <em>antes de mirar</em>
       </Cabeza>
-      <div className="tira">
+      <div className="tira-p">
         {pasos.map((p, i) => (
           <div key={p.t} style={{ display: "contents" }}>
             {i > 0 && (
@@ -342,7 +412,7 @@ function Preparar({ paso }: { paso: number }) {
               </F>
             )}
             <F n={i + 1} className={`paso-img${paso === i + 1 ? " activo" : ""}`}>
-              <div className="marco">
+              <div className="marco-p">
                 <img className={p.px ? "px" : undefined} src={`${IMG}/${p.src}`} alt={p.t} />
               </div>
               <h3>{p.t}</h3>
@@ -440,10 +510,10 @@ function Anillo({ n, paso, pct, color, texto, titulo, desc, dato }: { n: number;
     <F n={n} className="anillo">
       <div className="dona">
         <svg viewBox="0 0 100 100" aria-hidden="true">
-          <circle className="pista" cx="50" cy="50" r="45" />
+          <circle className="pista-a" cx="50" cy="50" r="45" />
           <circle className="valor-a" cx="50" cy="50" r="45" style={{ stroke: color, color, strokeDashoffset: paso >= n ? 282.7 * (1 - pct / 100) : 282.7 }} />
         </svg>
-        <div className="cifra" style={{ color }}>
+        <div className="cifra-a" style={{ color }}>
           <span>
             {dec(v, dato % 1 ? 1 : 0)}
             <small>%</small>
@@ -473,14 +543,22 @@ function Resultados({ paso }: { paso: number }) {
 
 /* ───────────── 11 · Mejora ───────────── */
 function Mejora({ paso }: { paso: number }) {
-  const etiquetas = ["Primer intento", "Fotos reales", "Más ajuste", "Rectángulos", "Fondo oscuro", "Bordes de mesa", "Mano alzada"];
+  const etiquetas: [string, string][] = [
+    ["Primer intento", "primer modelo"],
+    ["Fotos reales", "sumamos fotos hechas a mano"],
+    ["Más ajuste", "afinado con esas fotos"],
+    ["Rectángulos", "fotos no cuadradas"],
+    ["Fondo oscuro", "trazo claro u oscuro"],
+    ["Bordes de mesa", "ignorar sombras y bordes"],
+    ["Mano alzada", "puntos huecos y garabatos"],
+  ];
   return (
     <>
       <Cabeza k="Cómo fuimos mejorando">
         Del <em>29 %</em> al 100 %
       </Cabeza>
       <p className="sub" style={{ maxWidth: "none" }}>
-        Las mismas 38 fotos de un compañero, después de cada mejora.
+        Cada barra: % de aciertos en las <b>mismas 38 fotos de un compañero</b>, que la red nunca usó para aprender.
       </p>
       <div className="escalera">
         {D.evolucion.map((e, i) => (
@@ -491,15 +569,13 @@ function Mejora({ paso }: { paso: number }) {
         ))}
       </div>
       <div className="etiquetas">
-        {etiquetas.map((t) => (
-          <span key={t}>{t}</span>
+        {etiquetas.map(([t, d]) => (
+          <span key={t}>
+            <b>{t}</b>
+            {d}
+          </span>
         ))}
       </div>
-      <F n={2}>
-        <p className="nota" style={{ marginTop: 14 }}>
-          Cada mejora salió de <b>mirar dónde fallaba</b>: fondo oscuro con letra clara, trazos finos, bordes de la mesa, puntos huecos.
-        </p>
-      </F>
     </>
   );
 }
@@ -562,7 +638,7 @@ function Cierre() {
           </Link>
         </F>
       </div>
-      <div className="fila" aria-hidden="true">
+      <div className="fila-p" aria-hidden="true">
         <GlifoMaya valor={19} ancho={300} className="glifo" animado />
       </div>
     </div>
@@ -571,8 +647,9 @@ function Cierre() {
 
 export const SLIDES: Diapo[] = [
   { id: "portada", titulo: "Portada", pasos: 0, Contenido: Portada },
+  { id: "intro", titulo: "Qué es una CNN", pasos: 2, Contenido: IntroCNN },
   { id: "reto", titulo: "El reto", pasos: 3, Contenido: Reto },
-  { id: "cnn", titulo: "Qué es una CNN", pasos: 2, Contenido: Convolucion },
+  { id: "cnn", titulo: "El filtro", pasos: 2, Contenido: Convolucion },
   { id: "flujo", titulo: "El recorrido", pasos: 6, Contenido: Flujo },
   { id: "dentro", titulo: "Por dentro", pasos: 3, Contenido: PorDentro },
   { id: "datos", titulo: "Los datos", pasos: 4, Contenido: Datos },
@@ -580,7 +657,7 @@ export const SLIDES: Diapo[] = [
   { id: "aprende", titulo: "Cómo aprende", pasos: 2, Contenido: Aprende },
   { id: "rechazo", titulo: "Rechazar", pasos: 4, Contenido: Rechazo },
   { id: "resultados", titulo: "Resultados", pasos: 3, Contenido: Resultados },
-  { id: "mejora", titulo: "Mejora", pasos: 2, Contenido: Mejora },
+  { id: "mejora", titulo: "Mejora", pasos: 1, Contenido: Mejora },
   { id: "errores", titulo: "Errores", pasos: 3, Contenido: Errores },
   { id: "cierre", titulo: "Cierre", pasos: 4, Contenido: Cierre },
 ];
