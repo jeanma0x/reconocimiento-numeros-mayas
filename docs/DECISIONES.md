@@ -406,3 +406,23 @@ ajena, que todavía no se ha hecho.
 **Además.** `synth.glifo_mano` (trazo fino que tiembla, barras con pendiente propia, puntos
 irregulares) quedó en el generador al 35 % de las muestras para cubrir el dibujo con mouse o
 lapicero; **el modelo instalado todavía no se entrenó con él**.
+
+
+**Actualización (misma noche): modelo G, el instalado.** La corrida con más datos y mano alzada
+(F: 1 500 por clase, 15 000 negativos, 35 % `glifo_mano`) empató con E sobre las fotos limpias de
+Imri y quedó 1 punto por debajo con fotos reales perturbadas, sobre todo con un margen uniforme
+añadido (31/40 contra 35/40). Se afinó 5 épocas más con márgenes y recortes aleatorios en el
+entrenamiento (`dataset.margen_o_recorte`) y salió **G (`20261120-212233-B`)**:
+
+| Prueba | E | F | **G** |
+|---|---:|---:|---:|
+| Fotos de Imri limpias (37 de 38 válidas; el error es el mismo "1" de GC2) | 37 | 37 | **37** |
+| Estrés sobre fotos reales (`maya.estres`, 11 variantes × 40 fotos) | 95,5 % | 94,5 % | **95,7 %** |
+| Mano alzada sintética, 1 500 imágenes de prueba | 88,8 % | 94,2 % | **94,8 %** |
+| Rechazo de negativos sintéticos | 97,6 % | 96,6 % | **96,8 %** |
+
+La prueba de estrés (rotación ±9°, poca luz, sobreexposición, desenfoque, baja resolución con
+JPEG, margen extra, recorte, perspectiva, ruido) se hizo con las mismas 40 fotos que se usaron
+para diagnosticar: **sirve para comparar modelos entre sí, no como medida absoluta**. El
+conjunto de prueba sintético de mano alzada es de la propia distribución de F y G, así que
+sobreestima. Lo que falta sigue siendo una mano real ajena.

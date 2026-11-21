@@ -49,12 +49,12 @@ entrenamiento:
     calentamiento_epocas: 3
     paciencia: 8
   etapa_b:
-    epocas: 14
+    epocas: 5
     lote: 64
-    lr: 1.5e-4
+    lr: 1.0e-4
     repeticiones_reales: 10
     fraccion_sintetico: 0.3
-    paciencia: 4
+    paciencia: 3
 
 calibracion:
   peso_acierto_valida: 0.8      # pesos de la rúbrica (ADR-006)

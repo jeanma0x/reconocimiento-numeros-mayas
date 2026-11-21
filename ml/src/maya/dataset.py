@@ -374,7 +374,24 @@ def agregar_borde_mesa(img: np.ndarray, rng) -> np.ndarray:
     return out
 
 
-def construir_cache(filas, raiz="../data", split="train", progreso=True, repetir_reales=1, rectangular=True, bordes=True) -> tuple:
+def margen_o_recorte(img: np.ndarray, rng) -> np.ndarray:
+    """Imita encuadres que el sintético no tenía: una imagen digital con márgenes
+    uniformes alrededor (blanco, gris o del color del fondo) o una foto recortada de
+    más. En la prueba de estrés con fotos reales, añadir un margen del 15 % era el caso
+    en que el modelo más caía (ADR-016)."""
+    import cv2
+    h, w = img.shape[:2]
+    if rng.random() < 0.55:
+        d = int(min(h, w) * rng.uniform(0.05, 0.22))
+        r = rng.random()
+        color = (255, 255, 255) if r < 0.5 else ((int(rng.integers(200, 245)),) * 3 if r < 0.75
+                else tuple(int(v) for v in np.median(img.reshape(-1, 3), axis=0)))
+        return cv2.copyMakeBorder(np.ascontiguousarray(img), d, d, d, d, cv2.BORDER_CONSTANT, value=color)
+    a, b, c, e = (int(v * rng.uniform(0.0, 0.08)) for v in (h, h, w, w))
+    return img[a:h - b, c:w - e]
+
+
+def construir_cache(filas, raiz="../data", split="train", progreso=True, repetir_reales=1, rectangular=True, bordes=True, extra_encuadre=True) -> tuple:
     """`repetir_reales` > 1 duplica las fotos reales del split de entrenamiento: son pocas
     y es lo que de verdad se evalúa; el aumento al vuelo hace distinta cada copia."""
     raiz = Path(raiz)
@@ -393,6 +410,9 @@ def construir_cache(filas, raiz="../data", split="train", progreso=True, repetir
         if bordes and f["fuente"] in ("synth", "externo") and \
                 np.random.default_rng(11_000 + i).random() < 0.45:
             img = agregar_borde_mesa(img, np.random.default_rng(13_000 + i))
+        if extra_encuadre and f["fuente"] in ("synth", "externo") and \
+                np.random.default_rng(17_000 + i).random() < 0.4:
+            img = margen_o_recorte(img, np.random.default_rng(19_000 + i))
         t = P.preparar(img)
         X[i] = np.round(t[0] * 255).astype(np.uint8)
         idx = L.indice_de_etiqueta(f["clase"])

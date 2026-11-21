@@ -146,10 +146,13 @@ la red leía como «varios números» los trocitos de otros números pegados al 
 Recortar el 4 % de cada borde (paso 1b, en Python y TypeScript, paridad exacta) lo llevó a 17/19
 sin reentrenar. Descartada la hipótesis del relleno a cuadrado (no cambió nada).
 
-**Modelo instalado en `web/public/models/`: corrida `20261120-202202-B`** (CNN propia de
+**Modelo instalado en `web/public/models/`: corrida `20261120-212233-B` («G»)** (CNN propia de
 541 629 parámetros, 2,22 MB, ONNX verificado: 100 % de coincidencia de etiquetas en 200 muestras).
-Pipeline: etapa A de 22 épocas sobre sintético; afinado con externo (4 701), fotos de José (53) y
-GC2 (19) repetidas ×10, recorte del 4 % (ADR-015) y cuñas de mesa (ADR-016).
+Pipeline: etapa A de 22 épocas; afinados sucesivos con externo (4 701), fotos de José (53) y GC2 (19)
+repetidas ×10, recorte del 4 % (ADR-015), cuñas de mesa, sintético a mano alzada y márgenes/recortes
+aleatorios (ADR-016). Comparación E/F/G y pruebas de estrés al final de ADR-016.
+En las 40 fotos de Imri: GC 19/19 (mano no vista, parcialmente contaminada), GC2 18/19, ceros 2/2.
+Estrés sobre fotos reales: 95,7 %; mano alzada sintética: 94,8 %.
 
 | Medición | Resultado | Honesta |
 |---|---|---|
