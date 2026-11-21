@@ -317,15 +317,83 @@ def comprobar_archivos(filas, raiz="../data") -> list[str]:
 
 # --- Cache de tensores --------------------------------------------------------
 
-def construir_cache(filas, raiz="../data", split="train", progreso=True) -> tuple:
+def rectangularizar(img: np.ndarray, rng) -> np.ndarray:
+    """Recorta una imagen cuadrada a un formato de foto (4:3 … 16:9, a veces vertical)
+    sin cortar la tinta. El sintético y el externo son cuadrados; las fotos reales no, y
+    el preprocesamiento rellena a cuadrado con una franja de otro tono que la red nunca
+    había visto: con GC (marcador) eso bajó el acierto de 18/19 a 8/19 (ADR-015)."""
+    h, w = img.shape[:2]
+    g = P.a_gris(img)
+    ink = np.abs(g - np.median(g)) > 45
+    ys, xs = np.nonzero(ink)
+    if len(ys) < 5:
+        return img
+    a = rng.uniform(1.25, 1.9)
+    horizontal = rng.random() < 0.8
+    if horizontal:
+        nuevo = int(w / a)
+        nuevo = max(nuevo, int(ys.max() - ys.min()) + 8)
+        if nuevo >= h:
+            return img
+        lo, hi = max(0, int(ys.max()) + 1 - nuevo), min(int(ys.min()), h - nuevo)
+        y0 = int(rng.integers(lo, hi + 1)) if hi >= lo else lo
+        return img[y0:y0 + nuevo]
+    nuevo = int(h / a)
+    nuevo = max(nuevo, int(xs.max() - xs.min()) + 8)
+    if nuevo >= w:
+        return img
+    lo, hi = max(0, int(xs.max()) + 1 - nuevo), min(int(xs.min()), w - nuevo)
+    x0 = int(rng.integers(lo, hi + 1)) if hi >= lo else lo
+    return img[:, x0:x0 + nuevo]
+
+
+def agregar_borde_mesa(img: np.ndarray, rng) -> np.ndarray:
+    """Pinta una o dos cuñas de color uniforme pegadas al borde, como la mesa que rodea
+    una hoja fotografiada. Tras invertir la polaridad la mesa oscura queda como una cuña
+    clara, y con las fotos de Imri eso bastó para que la red rechazara números válidos
+    (el 7, el 13...). El sintético y el externo no tenían nada parecido. ADR-016."""
+    import cv2
+    out = np.ascontiguousarray(img.copy())
+    h, w = out.shape[:2]
+    for _ in range(int(rng.integers(1, 3))):
+        lado = int(rng.integers(0, 4))                     # 0 izq, 1 der, 2 arriba, 3 abajo
+        frac = rng.uniform(0.02, 0.2)
+        sesgo = rng.uniform(-0.08, 0.08)                   # el borde de la hoja no es recto
+        base = rng.choice([[60, 20, 25], [90, 55, 35], [25, 25, 25], [120, 90, 60],
+                           [200, 200, 205], [40, 50, 90]])
+        color = np.clip(np.array(base) + rng.integers(-20, 21, 3), 0, 255).tolist()
+        if lado == 0:
+            pts = [(0, 0), (int(w * (frac + sesgo)), 0), (int(w * (frac - sesgo)), h), (0, h)]
+        elif lado == 1:
+            pts = [(w, 0), (int(w * (1 - frac + sesgo)), 0), (int(w * (1 - frac - sesgo)), h), (w, h)]
+        elif lado == 2:
+            pts = [(0, 0), (w, 0), (w, int(h * (frac + sesgo))), (0, int(h * (frac - sesgo)))]
+        else:
+            pts = [(0, h), (w, h), (w, int(h * (1 - frac + sesgo))), (0, int(h * (1 - frac - sesgo)))]
+        cv2.fillPoly(out, [np.array(pts, np.int32)], color)
+    return out
+
+
+def construir_cache(filas, raiz="../data", split="train", progreso=True, repetir_reales=1, rectangular=True, bordes=True) -> tuple:
+    """`repetir_reales` > 1 duplica las fotos reales del split de entrenamiento: son pocas
+    y es lo que de verdad se evalúa; el aumento al vuelo hace distinta cada copia."""
     raiz = Path(raiz)
     sub = [f for f in filas if f["split"] == split]
+    if split == "train" and repetir_reales > 1:
+        sub = sub + [f for f in sub if f["fuente"] == "real"] * (repetir_reales - 1)
     X = np.zeros((len(sub), P.LADO, P.LADO), np.uint8)
     y = np.zeros(len(sub), np.int64)
     yb = np.full(len(sub), -1, np.int64)
     yp = np.full(len(sub), -1, np.int64)
     for i, f in enumerate(sub):
-        t = P.preparar_archivo(raiz / f["ruta"])
+        img = P.cargar_imagen(raiz / f["ruta"])
+        if rectangular and f["fuente"] in ("synth", "externo") and \
+                np.random.default_rng(7_000 + i).random() < 0.7:
+            img = rectangularizar(img, np.random.default_rng(9_000 + i))
+        if bordes and f["fuente"] in ("synth", "externo") and \
+                np.random.default_rng(11_000 + i).random() < 0.45:
+            img = agregar_borde_mesa(img, np.random.default_rng(13_000 + i))
+        t = P.preparar(img)
         X[i] = np.round(t[0] * 255).astype(np.uint8)
         idx = L.indice_de_etiqueta(f["clase"])
         y[i] = idx
@@ -383,6 +451,8 @@ if __name__ == "__main__":
     ap.add_argument("--comprobar-archivos", action="store_true",
                     help="comprueba que el disco coincide con los manifiestos (sha256)")
     ap.add_argument("--cache", action="store_true")
+    ap.add_argument("--repetir-reales", type=int, default=1,
+                    help="copias de cada foto real en la caché de entrenamiento")
     ap.add_argument("--semilla", type=int, default=42)
     a = ap.parse_args()
 
@@ -411,5 +481,5 @@ if __name__ == "__main__":
         raise SystemExit(1 if problemas else 0)
     if a.cache:
         for split in ("train", "val", "test"):
-            destino, n = construir_cache(filas, a.raiz, split)
+            destino, n = construir_cache(filas, a.raiz, split, repetir_reales=a.repetir_reales)
             print(f"  {destino.name}: {n} tensores")

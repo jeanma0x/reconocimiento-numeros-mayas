@@ -76,6 +76,12 @@ def glifo(barras: int, puntos: int, rng) -> np.ndarray:
     """Máscara recortada de un número maya: puntos arriba, barras abajo."""
     T = rng.integers(10, 26)                       # grosor de barra
     Lb = rng.integers(150, 230)                    # largo de barra
+    # Trazo fino: una barra con lapicero o pluma fina mide 3–8 px frente a barras de 150+,
+    # mientras los puntos siguen siendo gordos (medido en el dataset de Imri, 2026-11-20:
+    # barras de ~1 px a 64x64 que la red nunca había visto). Tb es el grosor solo de las
+    # barras; T sigue gobernando puntos y separaciones, que son independientes del
+    # instrumento con que se trazó la barra. ADR-014.
+    Tb = int(rng.integers(3, 9)) if rng.random() < 0.30 else int(T)
     # El rango de radio de punto es ancho a propósito. Una persona que dibuja con el
     # dedo o el mouse da un toque cuyo diámetro es el grosor del trazo, o sea R ≈ T/2;
     # el extremo alto cubre a quien pinta puntos gordos. Si el rango fuera estrecho, la
@@ -95,7 +101,7 @@ def glifo(barras: int, puntos: int, rng) -> np.ndarray:
     else:
         ancho_puntos = 0
     alto = (2 * R if puntos else 0) + (D if puntos and barras else 0) + \
-           (barras * T + (barras - 1) * G if barras else 0)
+           (barras * Tb + (barras - 1) * G if barras else 0)
     ancho = max(Lb, ancho_puntos + 2 * R)
     pad = int(T * 1.5)
     m = np.zeros((alto + 2 * pad, ancho + 2 * pad), np.uint8)
@@ -114,7 +120,7 @@ def glifo(barras: int, puntos: int, rng) -> np.ndarray:
     for i in range(barras):
         largo_i = int(Lb * rng.uniform(0.88, 1.0))
         x0 = cx - largo_i // 2 + int(rng.normal(0, T * 0.2))
-        barra(m, x0, x0 + largo_i, y + T // 2 + i * (T + G), T, rng)
+        barra(m, x0, x0 + largo_i, y + Tb // 2 + i * (Tb + G), Tb, rng)
 
     # Se devuelve Lb como unidad de referencia: el tamaño con que se pega el glifo
     # en el lienzo se deriva de ella, no de su caja envolvente. Así un "1" es un
