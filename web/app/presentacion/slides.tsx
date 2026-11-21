@@ -93,7 +93,71 @@ function IntroCNN() {
   );
 }
 
-/* ───────────── 3 · El reto ───────────── */
+/* ───────────── 3 · Cómo funciona (de lo simple a lo complejo) ───────────── */
+function Complejo({ paso }: { paso: number }) {
+  const nodos = [
+    {
+      t: "Trazos",
+      d: "Primero busca líneas y bordes sueltos",
+      vis: (
+        <svg width="84" height="70" viewBox="0 0 84 70" fill="none" stroke="var(--jade)" strokeWidth="5" strokeLinecap="round" aria-hidden="true">
+          <path d="M10 16h26" /><path d="M48 12l22 10" /><path d="M14 40v20" /><path d="M44 58h28" /><path d="M56 34l12 14" />
+        </svg>
+      ),
+    },
+    {
+      t: "Partes",
+      d: "Luego las junta: puntos y barras",
+      vis: (
+        <svg width="84" height="70" viewBox="0 0 84 70" fill="var(--azul)" aria-hidden="true">
+          <circle cx="24" cy="20" r="9" /><circle cx="54" cy="20" r="9" /><rect x="8" y="42" width="68" height="12" rx="6" />
+        </svg>
+      ),
+    },
+    { t: "Número", d: "Al final entiende cuántos hay y dónde", vis: <GlifoMaya valor={14} ancho={92} className="glifo" /> },
+    {
+      t: "Votación",
+      d: "Reparte su confianza entre las opciones",
+      vis: (
+        <svg width="110" height="70" viewBox="0 0 110 70" aria-hidden="true">
+          {[["14", 88, "var(--jade)"], ["13", 30, "var(--ocre)"], ["no", 14, "var(--cinabrio)"]].map(([t, w, col], i) => (
+            <g key={String(t)}>
+              <text x="0" y={16 + i * 22} fill="#a3ada6" fontSize="11" fontFamily="monospace">{t}</text>
+              <rect x="22" y={7 + i * 22} width={Number(w)} height="12" rx="6" fill={String(col)} />
+            </g>
+          ))}
+        </svg>
+      ),
+    },
+  ];
+  return (
+    <>
+      <Cabeza k="Cómo funciona">
+        De lo simple <em>a lo complejo</em>
+      </Cabeza>
+      <div className="flujo">
+        {nodos.map((n, i) => (
+          <div key={n.t} style={{ display: "contents" }}>
+            {i > 0 && <div className="conn" style={N(i)} />}
+            <F n={i + 1} className={`nodo${paso === i + 1 ? " activo" : paso > i + 1 ? " hecho" : ""}`}>
+              <div className="caja">{n.vis}</div>
+              <h3>{n.t}</h3>
+              <p>{n.d}</p>
+            </F>
+          </div>
+        ))}
+      </div>
+      <F n={5}>
+        <p className="pregunta" style={{ maxWidth: "52ch" }}>
+          Mientras aprende, cada error ajusta un poco sus filtros. Con miles de ejemplos, cada vez se equivoca menos.
+        </p>
+      </F>
+      <F n={4}><p className="nota" style={{ marginTop: 10 }}>Las barras de votación son un ejemplo ilustrativo.</p></F>
+    </>
+  );
+}
+
+/* ───────────── 4 · El reto ───────────── */
 function Reto() {
   return (
     <>
@@ -268,7 +332,7 @@ function Flujo({ paso }: { paso: number }) {
         ))}
       </div>
       <F n={3} className="detalle-red">
-        <b>Dentro de «La red mira»:</b> 4 bloques de filtros, de líneas simples a las partes del número. Lo vemos en detalle en la diapositiva 6.
+        <b>Dentro de «La red mira»:</b> 4 bloques de filtros, de líneas simples a las partes del número. Lo vemos en detalle en la diapositiva 7.
       </F>
       <F n={6}>
         <span className="sello">Todo ocurre en tu navegador · sin servidor · sin internet</span>
@@ -638,9 +702,11 @@ function Cierre() {
           </Link>
         </F>
       </div>
-      <div className="fila-p" aria-hidden="true">
-        <GlifoMaya valor={19} ancho={300} className="glifo" animado />
-      </div>
+      <F n={4} className="qr-caja">
+        <img src={`${IMG}/qr-demo.svg`} alt="Código QR que abre la demo en reconocimiento-numeros-mayas.vercel.app" />
+        <b>Pruébala en tu celular</b>
+        <span>reconocimiento-numeros-mayas.vercel.app</span>
+      </F>
     </div>
   );
 }
@@ -648,6 +714,7 @@ function Cierre() {
 export const SLIDES: Diapo[] = [
   { id: "portada", titulo: "Portada", pasos: 0, Contenido: Portada },
   { id: "intro", titulo: "Qué es una CNN", pasos: 2, Contenido: IntroCNN },
+  { id: "complejo", titulo: "Cómo funciona", pasos: 5, Contenido: Complejo },
   { id: "reto", titulo: "El reto", pasos: 3, Contenido: Reto },
   { id: "cnn", titulo: "El filtro", pasos: 2, Contenido: Convolucion },
   { id: "flujo", titulo: "El recorrido", pasos: 6, Contenido: Flujo },

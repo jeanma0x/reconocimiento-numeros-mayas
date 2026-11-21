@@ -532,7 +532,7 @@ seguía pareciendo plantilla y un defecto real:
   un barrido sobre la imagen cuando llega el resultado. Solo `transform`/`opacity`; con
   `prefers-reduced-motion` el fondo se detiene y el barrido desaparece.
 
-## ADR-018 — Presentación integrada en `/presentacion` (14 diapositivas)
+## ADR-018 — Presentación integrada en `/presentacion` (15 diapositivas)
 
 **Decisión.** La presentación vive en la propia app (`web/app/presentacion`), sin depender de otro programa ni de internet. Segunda versión: 13 diapositivas (antes 20), lenguaje sencillo, un solo mensaje por diapositiva y animaciones que muestran el flujo (convolución con filtro real, recorrido imagen→respuesta, capas, curva de entrenamiento, anillos de resultados, escalera de mejora). Escenario oscuro propio, independiente del tema de la demo.
 **Cifras.** Todas salen de `web/app/presentacion/datos.ts` (corrida 20261120-231151-B). Si cambia el modelo instalado, se actualiza ahí.
