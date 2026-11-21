@@ -4,7 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import CapturaCamara from "@/components/CapturaCamara";
 import GlifoMaya from "@/components/GlifoMaya";
-import { IconoBorrar, IconoCamara, IconoLapiz, IconoSubir } from "@/components/Iconos";
+import {
+  IconoBorrar,
+  IconoCamara,
+  IconoCerrar,
+  IconoLapiz,
+  IconoPantalla,
+  IconoSubir,
+} from "@/components/Iconos";
 import LienzoDibujo from "@/components/LienzoDibujo";
 import PanelResultado from "@/components/PanelResultado";
 import ZonaDeCarga from "@/components/ZonaDeCarga";
@@ -30,6 +37,8 @@ export default function Reconocedor() {
   const [metadata, setMetadata] = useState<Metadata | null>(null);
   const [historial, setHistorial] = useState<EntradaHistorial[]>([]);
   const [enLinea, setEnLinea] = useState(true);
+  const [presentacion, setPresentacion] = useState(false);
+  const [barrido, setBarrido] = useState(0);
   const urlActual = useRef<string | null>(null);
 
   // La app corre entera en el navegador: mostrar si no hay red, porque sigue funcionando
@@ -58,13 +67,18 @@ export default function Reconocedor() {
       });
   }, []);
 
-  // Modo presentación con la tecla P: agranda el resultado y oculta lo secundario
+  // Modo presentación: botón o tecla P. Agranda el resultado y oculta lo secundario, pero la
+  // entrada sigue a la vista: hay que poder cargar la imagen del docente sin salir del modo.
+  useEffect(() => {
+    document.body.classList.toggle("presentacion", presentacion);
+  }, [presentacion]);
+
   useEffect(() => {
     const alPulsar = (e: KeyboardEvent) => {
       const enCampo = (e.target as HTMLElement)?.tagName?.match(/INPUT|TEXTAREA/);
-      if (!enCampo && (e.key === "p" || e.key === "P")) {
-        document.body.classList.toggle("presentacion");
-      }
+      if (enCampo) return;
+      if (e.key === "p" || e.key === "P") setPresentacion((v) => !v);
+      if (e.key === "Escape") setPresentacion(false);
     };
     window.addEventListener("keydown", alPulsar);
     return () => window.removeEventListener("keydown", alPulsar);
@@ -83,6 +97,7 @@ export default function Reconocedor() {
       const { rgba, alto, ancho } = await pixelesDesde(blob);
       const r = await reconocer(rgba, alto, ancho);
       setResultado(r);
+      setBarrido((n) => n + 1);
 
       setHistorial((h) =>
         [
@@ -158,7 +173,7 @@ export default function Reconocedor() {
     <div className="envoltorio">
       <header className="cabecera">
         <a className="marca" href="/" aria-label="Numerales mayas, inicio">
-          <GlifoMaya valor={19} ancho={44} className="marca-glifo" />
+          <GlifoMaya valor={19} ancho={44} className="marca-glifo" animado />
           <h1 className="titulo">
             Numerales mayas
             <span>Reconocimiento con CNN · 1 a 19</span>
@@ -169,11 +184,36 @@ export default function Reconocedor() {
             <i aria-hidden="true" />
             {estado.texto}
           </span>
+          <button
+            type="button"
+            className="boton"
+            aria-pressed={presentacion}
+            onClick={() => setPresentacion((v) => !v)}
+          >
+            <IconoPantalla tamano={18} />
+            Presentar
+          </button>
           <a className="boton" href="/acerca">
             Cómo funciona
           </a>
         </nav>
       </header>
+
+      <p className="lede">
+        Una red neuronal entrenada por nosotros lee números mayas del 1 al 19 y rechaza todo lo
+        demás. Todo ocurre en tu navegador.
+      </p>
+
+      {presentacion && (
+        <button
+          type="button"
+          className="boton salir-presentacion"
+          onClick={() => setPresentacion(false)}
+        >
+          <IconoCerrar tamano={16} />
+          Salir · Esc
+        </button>
+      )}
 
       <main id="contenido">
         {estadoModelo === "error" && (
@@ -220,6 +260,7 @@ export default function Reconocedor() {
                       <div className="vista-previa">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={imagenURL} alt="Imagen cargada para reconocer" />
+                        <span key={barrido} className="barrido" aria-hidden="true" />
                       </div>
                     </div>
                     <div className="barra-acciones">
@@ -290,7 +331,7 @@ export default function Reconocedor() {
           {metadata ? (metadata.bytes_onnx / 1e6).toFixed(2) : "—"} MB
         </span>
         <span>
-          <kbd>P</kbd> modo presentación
+          <kbd>P</kbd> presentar · <kbd>Esc</kbd> salir
         </span>
       </footer>
     </div>

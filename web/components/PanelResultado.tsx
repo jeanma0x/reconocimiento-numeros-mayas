@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import GlifoMaya from "@/components/GlifoMaya";
+import SumaMaya from "@/components/SumaMaya";
 import { IconoAlerta, IconoCheck, IconoGirar, IconoProhibido } from "@/components/Iconos";
 import { LADO } from "@/lib/preprocess";
 import type { Resultado } from "@/lib/tipos";
@@ -74,6 +75,103 @@ function Leyenda() {
   );
 }
 
+/** El análisis en tres pasos, pensado para quien nunca ha visto una red neuronal. */
+function Explicacion({ r, consistente }: { r: Resultado; consistente: boolean }) {
+  const pct = (x: number) => `${(x * 100).toFixed(x < 0.1 ? 1 : 0)} %`;
+  const segunda = r.top[1];
+  return (
+    <section className="explicacion" aria-label="Cómo llegó la red a esta respuesta">
+      <h3 className="subtitulo">Cómo llegó a esta respuesta</h3>
+      <ol className="pasos">
+        <li>
+          <span className="n" aria-hidden="true">
+            1
+          </span>
+          <div>
+            <b>Preparó la imagen</b>
+            <p>Se pasa a blanco y negro y se reduce a 64 × 64 píxeles. Esto es lo que recibe la red:</p>
+            <VistaTensor tensor={r.tensor} />
+          </div>
+        </li>
+        <li>
+          <span className="n" aria-hidden="true">
+            2
+          </span>
+          <div>
+            <b>Contó las barras y los puntos</b>
+            <SumaMaya barras={r.barras} puntos={r.puntos} />
+            <p>En el sistema maya cada barra vale 5 y cada punto vale 1.</p>
+          </div>
+        </li>
+        <li>
+          <span className="n" aria-hidden="true">
+            3
+          </span>
+          <div>
+            <b>{r.rechazada ? "Descartó la imagen" : `Eligió el ${r.valor}`}</b>
+            {r.rechazada ? (
+              <p>
+                {r.motivo ? FRASE_MOTIVO[r.motivo] : ""} Su confianza en ese descarte fue de{" "}
+                {pct(r.confianza)}.
+              </p>
+            ) : (
+              <p>
+                Con {pct(r.confianza)} de confianza.
+                {segunda
+                  ? ` La segunda opción (${segunda.valor ?? "no válido"}) quedó en ${pct(segunda.probabilidad)}.`
+                  : ""}{" "}
+                {consistente
+                  ? "Lo que contó coincide con el número elegido, así que la respuesta es confiable."
+                  : "Ojo: lo que contó no coincide con el número elegido."}
+              </p>
+            )}
+          </div>
+        </li>
+      </ol>
+
+      <details className="depuracion">
+        <summary>Datos técnicos</summary>
+        <div className="depu-datos">
+          <div className="fila">
+            <span>Entrada a la red</span>
+            <b>
+              {LADO}×{LADO}, 1 canal
+            </b>
+          </div>
+          <div className="fila">
+            <span>Cabeza de barras</span>
+            <b>{r.barras}</b>
+          </div>
+          <div className="fila">
+            <span>Cabeza de puntos</span>
+            <b>{r.puntos}</b>
+          </div>
+          <div className="fila">
+            <span>5 × barras + puntos</span>
+            <b>{5 * r.barras + r.puntos}</b>
+          </div>
+          <div className="fila">
+            <span>Coincide con la clase</span>
+            <b>{consistente ? "sí" : "no"}</b>
+          </div>
+          <div className="fila">
+            <span>Confianza de esas cabezas</span>
+            <b>{(r.confianzaAux * 100).toFixed(0)}%</b>
+          </div>
+          <div className="fila">
+            <span>Inferencia</span>
+            <b>{r.msInferencia.toFixed(0)} ms</b>
+          </div>
+          <p>
+            Las tres cabezas son salidas de la red. La suma solo <i>verifica</i> que concuerden;
+            nunca decide la clase.
+          </p>
+        </div>
+      </details>
+    </section>
+  );
+}
+
 export default function PanelResultado({
   resultado,
   cargando,
@@ -117,14 +215,16 @@ export default function PanelResultado({
             Sube una foto, usa la cámara o dibuja un número. La red responde en milisegundos, sin
             salir de tu navegador.
           </p>
-          <div className="etiqueta" style={{ margin: "20px 0 0" }}>
-            Lo que reconoce
+          <div className="bloque-leyenda">
+            <div className="etiqueta" style={{ margin: "20px 0 0" }}>
+              Lo que reconoce
+            </div>
+            <Leyenda />
+            <p className="fuera-de-alcance">
+              Rechaza el cero maya, los números de 20 en adelante, otros sistemas de numeración,
+              objetos, dibujos y cualquier imagen con más de un número.
+            </p>
           </div>
-          <Leyenda />
-          <p className="fuera-de-alcance">
-            Rechaza el cero maya, los números de 20 en adelante, otros sistemas de numeración,
-            objetos, dibujos y cualquier imagen con más de un número.
-          </p>
         </div>
       )}
 
@@ -149,6 +249,7 @@ export default function PanelResultado({
                   <GlifoMaya
                     valor={r.valor as number}
                     ancho={132}
+                    animado
                     className="glifo-lectura"
                     titulo={`Número maya ${r.valor}: ${r.barras} ${r.barras === 1 ? "barra" : "barras"} y ${r.puntos} ${r.puntos === 1 ? "punto" : "puntos"}`}
                   />
@@ -190,48 +291,7 @@ export default function PanelResultado({
 
           <BarrasConfianza r={r} />
 
-          <details className="depuracion" open>
-            <summary>Cómo lo vio la red</summary>
-            <div className="depu-cuerpo">
-              <VistaTensor tensor={r.tensor} />
-              <div className="depu-datos">
-                <div className="fila">
-                  <span>Entrada a la red</span>
-                  <b>
-                    {LADO}×{LADO}, 1 canal
-                  </b>
-                </div>
-                <div className="fila">
-                  <span>Cabeza de barras</span>
-                  <b>{r.barras}</b>
-                </div>
-                <div className="fila">
-                  <span>Cabeza de puntos</span>
-                  <b>{r.puntos}</b>
-                </div>
-                <div className="fila">
-                  <span>5 × barras + puntos</span>
-                  <b>{5 * r.barras + r.puntos}</b>
-                </div>
-                <div className="fila">
-                  <span>Coincide con la clase</span>
-                  <b>{consistente ? "sí" : "no"}</b>
-                </div>
-                <div className="fila">
-                  <span>Confianza de esas cabezas</span>
-                  <b>{(r.confianzaAux * 100).toFixed(0)}%</b>
-                </div>
-                <div className="fila">
-                  <span>Inferencia</span>
-                  <b>{r.msInferencia.toFixed(0)} ms</b>
-                </div>
-                <p>
-                  Las tres cabezas son salidas de la red. La suma solo <i>verifica</i> que
-                  concuerden; nunca decide la clase.
-                </p>
-              </div>
-            </div>
-          </details>
+          <Explicacion r={r} consistente={consistente} />
         </>
       )}
     </>

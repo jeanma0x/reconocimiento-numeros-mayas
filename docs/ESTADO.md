@@ -124,7 +124,7 @@ corrida real guardada en `ml/runs/`.**
 
 ## Bitácora
 
-### 2026-11-21 · Rediseño de la interfaz (ADR-017)
+### 2026-11-21 · Rediseño de la interfaz (ADR-017, dos rondas)
 Auditoría de UI/UX y rediseño completo del frontend, sin tocar el modelo ni `preprocess`. Sistema
 visual propio (piedra caliza, jade, cinabrio; Newsreader + IBM Plex servidas desde el propio sitio),
 glifo maya en el dictamen, leyenda de los 19 números, íconos SVG, `aria-live`, pestañas con teclado,
@@ -133,8 +133,8 @@ objetivos de 44 px, `prefers-reduced-motion`, favicon e indicador de conexión. 
 
 Verificado en producción con Chrome automatizado (`e1cfff1`): las tres tipografías cargan, el 14 y
 el 7 se reconocen, el cero se rechaza, **y con la red cortada sigue reconociendo** (el estado dice
-«Sin conexión · funciona igual»). Sin respuestas con error. Despliegue anterior (modelo I, interfaz
-vieja, `5cfc4e5`) disponible para restaurar desde Vercel si algo fallara.
+«Sin conexión · funciona igual»). Sin respuestas con error. Segunda ronda: modo presentación corregido (antes no dejaba cargar imágenes), análisis en tres pasos,
+fondo y animaciones con `reduced-motion`. Despliegue de respaldo: `5cfc4e5` (modelo I, interfaz vieja).
 
 ### 2026-11-20 · Fotos de Imri, bug de polaridad y plan final
 Llegaron dos tandas de Imri (GC y GC2, 20 fotos cada una, 1–19 + cero). Quedaron en

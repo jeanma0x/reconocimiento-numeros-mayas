@@ -55,10 +55,14 @@
 
 * { box-sizing: border-box; }
 
+html {
+  background-color: var(--papel);
+  /* grano de papel muy tenue */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--papel);
   color: var(--tinta);
   font: 16px/1.55 var(--sans);
   -webkit-font-smoothing: antialiased;
@@ -122,9 +126,17 @@ code, kbd, .mono { font-family: var(--mono); }
   background: var(--superficie); border: 1px solid var(--linea);
   border-radius: var(--radio); padding: 20px;
 }
+.tablero > .panel:last-child {
+  /* sin caja, pero con un velo del color del fondo para que el motivo de atrás no estorbe al texto */
+  background: color-mix(in srgb, var(--papel) 86%, transparent); border: 0;
+  border-left: 1px solid var(--linea-fuerte); border-radius: 0; padding: 4px 4px 4px 32px;
+}
+@media (max-width: 900px) {
+  .tablero > .panel:last-child { border-left: 0; border-top: 1px solid var(--linea-fuerte); padding: 24px 0 0; }
+}
 .panel h2, .etiqueta {
-  margin: 0 0 14px; font: 500 12px/1.2 var(--mono); letter-spacing: .12em;
-  text-transform: uppercase; color: var(--gris);
+  margin: 0 0 14px; font: italic 400 19px/1.2 var(--serif); letter-spacing: 0;
+  text-transform: none; color: var(--gris);
 }
 
 /* ---------- Pestañas de entrada ---------- */
@@ -297,8 +309,8 @@ code, kbd, .mono { font-family: var(--mono); }
 /* ---------- Cómo lo vio la red ---------- */
 details.depuracion { margin-top: 22px; border-top: 1px solid var(--linea); padding-top: 14px; }
 details.depuracion summary {
-  cursor: pointer; font: 500 12px/1.2 var(--mono); letter-spacing: .12em;
-  text-transform: uppercase; color: var(--gris); min-height: 32px; display: flex; align-items: center;
+  cursor: pointer; font: 400 13.5px/1.2 var(--sans); color: var(--gris);
+  min-height: 36px; display: flex; align-items: center; gap: 6px;
 }
 details.depuracion summary:hover { color: var(--tinta); }
 .depu-cuerpo { display: flex; gap: 20px; align-items: flex-start; margin-top: 14px; flex-wrap: wrap; }
@@ -315,7 +327,7 @@ details.depuracion summary:hover { color: var(--tinta); }
 /* ---------- Historial ---------- */
 .historial { margin-top: 24px; }
 .historial-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-.historial-cabecera h2 { margin: 0; font: 500 12px/1.2 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
+.historial-cabecera h2 { margin: 0; font: italic 400 19px/1.2 var(--serif); color: var(--gris); }
 .tira { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 12px; }
 .ficha {
   flex: 0 0 auto; width: 96px; border: 1px solid var(--linea); border-radius: 3px;
@@ -344,18 +356,31 @@ details.depuracion summary:hover { color: var(--tinta); }
 }
 .pie-pagina kbd { border: 1px solid var(--linea-fuerte); border-radius: 3px; padding: 0 5px; }
 
-/* ---------- Modo presentación (tecla P) ---------- */
-body.presentacion .panel.secundario,
+/* ---------- Modo presentación (botón, tecla P o Esc para salir) ----------
+   La entrada SIGUE VISIBLE (compacta): hay que poder cargar la imagen del docente sin salir. */
+body.presentacion .lede,
 body.presentacion .historial,
-body.presentacion details.depuracion,
+body.presentacion .explicacion,
+body.presentacion .bloque-leyenda,
 body.presentacion .pie-pagina,
-body.presentacion .leyenda,
-body.presentacion .fuera-de-alcance { display: none; }
-body.presentacion .tablero { grid-template-columns: 1fr; }
-body.presentacion .cifra { font-size: clamp(180px, 34vw, 380px); }
-body.presentacion .glifo-lectura { transform: scale(2); transform-origin: right center; margin-right: 40px; }
-body.presentacion .rechazo .frase { font-size: clamp(36px, 6vw, 64px); }
-body.presentacion .rechazo .detalle { font-size: 20px; max-width: 60ch; }
+body.presentacion .estado,
+body.presentacion .pista,
+body.presentacion .pestanas { display: none; }
+body.presentacion .envoltorio { max-width: 1480px; }
+body.presentacion .tablero { grid-template-columns: minmax(280px, 0.62fr) 1.38fr; }
+body.presentacion .soltar { min-height: 230px; padding: 16px; }
+body.presentacion .soltar .tenue { display: none; }
+body.presentacion .vista-previa img, body.presentacion .vista-previa canvas { max-height: 300px; }
+body.presentacion .cifra { font-size: clamp(190px, 30vw, 380px); }
+body.presentacion .glifo-lectura { transform: scale(2.2); transform-origin: right center; margin-right: 56px; }
+body.presentacion .composicion { font-size: 20px; }
+body.presentacion .rechazo { padding: 36px 34px; }
+body.presentacion .rechazo .frase { font-size: clamp(40px, 5.6vw, 72px); }
+body.presentacion .rechazo .detalle { font-size: 22px; max-width: 52ch; }
+body.presentacion .barra { font-size: 17px; grid-template-columns: 110px 1fr 76px; }
+body.presentacion .barra .riel { height: 9px; }
+.salir-presentacion { position: fixed; bottom: 18px; right: 18px; z-index: 40; background: var(--superficie); }
+body.presentacion .cabecera nav .boton { display: none; }
 
 /* ---------- Tablas y rejilla (páginas Acerca y Dashboard) ---------- */
 table.datos { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -383,3 +408,95 @@ table.datos tr:last-child th, table.datos tr:last-child td { border-bottom: none
   .pestana { padding: 0 10px; font-size: 14px; }
   .barra { grid-template-columns: 62px 1fr 50px; }
 }
+
+/* ---------- Texto de apertura ---------- */
+.lede {
+  font: 400 clamp(20px, 2.4vw, 26px)/1.35 var(--serif); color: var(--tinta);
+  max-width: 54ch; margin: 0 0 28px; letter-spacing: -0.005em;
+}
+
+/* ---------- Análisis en tres pasos ---------- */
+.explicacion { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--linea); }
+.subtitulo { margin: 0 0 16px; font: italic 400 19px/1.2 var(--serif); color: var(--gris); }
+.pasos { list-style: none; margin: 0; padding: 0; display: grid; gap: 22px; }
+.pasos li { display: grid; grid-template-columns: 34px 1fr; gap: 14px; align-items: start; }
+.pasos .n {
+  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  border: 1px solid var(--linea-fuerte); font: 500 17px/1 var(--serif); color: var(--jade);
+}
+.pasos b { font: 500 17px/1.3 var(--sans); }
+.pasos p { margin: 6px 0 0; color: var(--gris); font-size: 15px; max-width: 54ch; }
+.pasos canvas {
+  display: block; margin-top: 12px; width: 150px; height: 150px; image-rendering: pixelated;
+  border: 1px solid var(--linea-fuerte); border-radius: 2px; background: #000;
+}
+.explicacion details.depuracion { margin-top: 22px; }
+
+.suma { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
+.ficha-suma {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; color: var(--tinta);
+  border: 1px solid var(--linea-fuerte); border-radius: 999px; background: var(--superficie);
+}
+.ficha-suma b { font: 500 14px/1 var(--mono); color: var(--jade); }
+.suma .igual { font: 500 24px/1 var(--serif); margin-left: 6px; }
+
+/* ---------- Fondo: numerales mayas a la deriva, casi imperceptibles ---------- */
+body::before {
+  content: ""; position: fixed; inset: -320px; z-index: -1; pointer-events: none;
+  background-size: 320px 320px; opacity: 1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' fill='rgba(27,26,23,.05)'%3E%3Ccircle cx='40' cy='40' r='3.4'/%3E%3Ccircle cx='54' cy='40' r='3.4'/%3E%3Ccircle cx='68' cy='40' r='3.4'/%3E%3Ccircle cx='200' cy='70' r='3.4'/%3E%3Ccircle cx='214' cy='70' r='3.4'/%3E%3Crect x='186' y='82' width='42' height='7' rx='3.5'/%3E%3Ccircle cx='90' cy='200' r='3.4'/%3E%3Ccircle cx='104' cy='200' r='3.4'/%3E%3Crect x='76' y='212' width='42' height='7' rx='3.5'/%3E%3Crect x='76' y='224' width='42' height='7' rx='3.5'/%3E%3Ccircle cx='252' cy='236' r='3.4'/%3E%3Crect x='232' y='248' width='42' height='7' rx='3.5'/%3E%3Crect x='232' y='260' width='42' height='7' rx='3.5'/%3E%3Crect x='232' y='272' width='42' height='7' rx='3.5'/%3E%3Crect x='14' y='140' width='42' height='7' rx='3.5'/%3E%3Ccircle cx='170' cy='150' r='3.4'/%3E%3C/svg%3E");
+  animation: deriva 140s linear infinite;
+}
+@media (prefers-color-scheme: dark) {
+  body::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' fill='rgba(239,235,226,.045)'%3E%3Ccircle cx='40' cy='40' r='3.4'/%3E%3Ccircle cx='54' cy='40' r='3.4'/%3E%3Ccircle cx='68' cy='40' r='3.4'/%3E%3Ccircle cx='200' cy='70' r='3.4'/%3E%3Ccircle cx='214' cy='70' r='3.4'/%3E%3Crect x='186' y='82' width='42' height='7' rx='3.5'/%3E%3Ccircle cx='90' cy='200' r='3.4'/%3E%3Ccircle cx='104' cy='200' r='3.4'/%3E%3Crect x='76' y='212' width='42' height='7' rx='3.5'/%3E%3Crect x='76' y='224' width='42' height='7' rx='3.5'/%3E%3Ccircle cx='252' cy='236' r='3.4'/%3E%3Crect x='232' y='248' width='42' height='7' rx='3.5'/%3E%3Crect x='232' y='260' width='42' height='7' rx='3.5'/%3E%3Crect x='232' y='272' width='42' height='7' rx='3.5'/%3E%3Crect x='14' y='140' width='42' height='7' rx='3.5'/%3E%3Ccircle cx='170' cy='150' r='3.4'/%3E%3C/svg%3E");
+  }
+}
+@keyframes deriva { to { transform: translate3d(320px, 320px, 0); } }
+
+/* ---------- Animaciones con sentido ---------- */
+@keyframes aparecer { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes aparece-punto { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+@keyframes aparece-barra { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+@keyframes llenar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes barrer { 0% { top: 0; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+.dictamen > * { animation: aparecer .38s cubic-bezier(.2, .7, .2, 1) both; }
+.cifra { animation: aparecer .45s cubic-bezier(.2, .7, .2, 1) both; }
+.glifo-lectura .g-punto, .marca-glifo .g-punto {
+  transform-box: fill-box; transform-origin: center;
+  animation: aparece-punto .4s cubic-bezier(.2, .9, .3, 1.35) both;
+}
+.glifo-lectura .g-barra, .marca-glifo .g-barra {
+  transform-box: fill-box; transform-origin: center;
+  animation: aparece-barra .45s cubic-bezier(.2, .8, .2, 1) both;
+}
+.glifo-lectura .g-punto { animation-delay: .15s; }
+.ficha-suma { animation: aparecer .35s cubic-bezier(.2, .7, .2, 1) both; }
+.medidor span { transform-origin: left; animation: llenar .7s cubic-bezier(.2, .7, .2, 1) .1s both; }
+.barra .relleno { transform-origin: left; animation: llenar .6s cubic-bezier(.2, .7, .2, 1) both; }
+.pasos li { animation: aparecer .4s cubic-bezier(.2, .7, .2, 1) both; }
+.pasos li:nth-child(2) { animation-delay: .12s; }
+.pasos li:nth-child(3) { animation-delay: .24s; }
+.rechazo { animation: aparecer .38s cubic-bezier(.2, .7, .2, 1) both; }
+
+/* Línea que recorre la imagen cuando llega un resultado: es el momento en que la red "mira" */
+.vista-previa .barrido {
+  position: absolute; left: 0; right: 0; top: 0; height: 2px; pointer-events: none;
+  background: var(--jade); box-shadow: 0 0 14px 2px var(--jade);
+  animation: barrer .8s ease-in-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none; }
+  .vista-previa .barrido { display: none; }
+}
+
+/* Indicador de que "Datos técnicos" se despliega (triángulo dibujado, no un carácter) */
+details.depuracion summary { list-style: none; }
+details.depuracion summary::-webkit-details-marker { display: none; }
+details.depuracion summary::before {
+  content: ""; width: 0; height: 0; border: 5px solid transparent; border-left-color: currentColor;
+  border-right-width: 0; margin-right: 4px; transition: transform .15s;
+}
+details.depuracion[open] summary::before { transform: rotate(90deg); }

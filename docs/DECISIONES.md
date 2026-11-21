@@ -513,3 +513,21 @@ ni `preprocess` (la paridad no se ve afectada).
 
 **Límite conocido.** Un dibujo con puntos muy separados y lejos de la barra se lee como un
 arreglo «disperso» y se rechaza: es comportamiento esperado, no un fallo.
+
+**Actualización (misma noche): segunda ronda de interfaz.** Con capturas de uso se corrigió lo que
+seguía pareciendo plantilla y un defecto real:
+
+- **Modo presentación roto.** Ocultaba el panel de carga: dentro del modo no se podía cargar la
+  imagen del docente. Ahora la entrada sigue visible y compacta, hay botón «Presentar» (además de
+  la tecla P), «Salir · Esc» y se ocultan solo lo secundario (historial, análisis, leyenda).
+  Verificado con Chrome automatizado: entra, carga una foto, reconoce y sale con Esc.
+- **Menos aspecto de plantilla.** Título de sección en serifa cursiva en vez de mayúsculas
+  monoespaciadas, columna de resultado abierta (filete en lugar de caja), grano de papel,
+  texto de apertura en serifa. Mono solo para datos.
+- **Análisis comprensible para cualquiera**: «Cómo llegó a esta respuesta» en tres pasos
+  (preparó la imagen · contó barras y puntos con fichas que suman · eligió y por qué), con los
+  datos técnicos plegados.
+- **Movimiento con sentido, no decorativo**: fondo de numerales mayas a la deriva (≈5 % de
+  opacidad), puntos y barras del glifo que aparecen uno a uno, medidor y barras que se llenan y
+  un barrido sobre la imagen cuando llega el resultado. Solo `transform`/`opacity`; con
+  `prefers-reduced-motion` el fondo se detiene y el barrido desaparece.

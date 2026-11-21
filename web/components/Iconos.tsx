@@ -86,3 +86,18 @@ export const IconoRayo = (p: Props) => (
     <path d="M13 3 5 13.5h6L10 21l8-10.5h-6L13 3Z" />
   </Base>
 );
+
+export const IconoPantalla = (p: Props) => (
+  <Base {...p}>
+    <rect x="3" y="4.5" width="18" height="12" rx="1.5" />
+    <path d="M8 20h8" />
+    <path d="M12 16.5V20" />
+  </Base>
+);
+
+export const IconoCerrar = (p: Props) => (
+  <Base {...p}>
+    <path d="m6 6 12 12" />
+    <path d="m18 6-12 12" />
+  </Base>
+);
