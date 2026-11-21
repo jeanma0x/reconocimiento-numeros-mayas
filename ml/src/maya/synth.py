@@ -75,7 +75,7 @@ def _recortar(mask):
 # Glifos
 # ----------------------------------------------------------------------------
 
-def glifo(barras: int, puntos: int, rng) -> np.ndarray:
+def glifo(barras: int, puntos: int, rng, gruesa=None) -> np.ndarray:
     """Máscara recortada de un número maya: puntos arriba, barras abajo."""
     T = rng.integers(10, 26)                       # grosor de barra
     Lb = rng.integers(150, 230)                    # largo de barra
@@ -85,6 +85,13 @@ def glifo(barras: int, puntos: int, rng) -> np.ndarray:
     # barras; T sigue gobernando puntos y separaciones, que son independientes del
     # instrumento con que se trazó la barra. ADR-014.
     Tb = int(rng.integers(2, 9)) if rng.random() < 0.35 else int(T)
+    # Barra GRUESA: marcador o pincel ancho. Medido el 2026-11-21 con fotos de Jean: una barra de
+    # grosor ≈ 0,2 × su largo se leía como 2–3 barras (9 → 19, 11 → 16). Hasta ahora el grosor
+    # máximo era 0,17 × el largo. ADR-020.
+    if gruesa is None:
+        gruesa = rng.random() < 0.22
+    if gruesa:
+        Tb = int(Lb * rng.uniform(0.17, 0.32))
     # El rango de radio de punto es ancho a propósito. Una persona que dibuja con el
     # dedo o el mouse da un toque cuyo diámetro es el grosor del trazo, o sea R ≈ T/2;
     # el extremo alto cubre a quien pinta puntos gordos. Si el rango fuera estrecho, la
@@ -290,6 +297,34 @@ def glifo_negativo(subclase: str, rng) -> np.ndarray:
                     rng.uniform(3, 6), 255, int(rng.integers(6, 14)), cv2.LINE_AA)
         return _recortar(m), 230.0
 
+    if subclase == "carita":
+        # Carita: dos ojos (puntos) y una boca curva. Dos puntos sobre un trazo se parece a un 7 u
+        # 8 maya; medido el 2026-11-21 con una carita feliz a marcador que se leyó como 8. ADR-020.
+        m = np.zeros((340, 340), np.uint8)
+        t = int(rng.integers(8, 20))
+        if rng.random() < 0.4:
+            cv2.circle(m, (170, 170), int(rng.integers(130, 150)), 255, max(4, int(t * 0.7)), cv2.LINE_AA)
+        ey = int(rng.integers(95, 135)); ex = int(rng.integers(45, 80)); r = int(rng.integers(10, 26))
+        hueco = rng.random() < 0.2
+        for sx in (-1, 1):
+            if rng.random() < 0.08:                      # guiño
+                cv2.line(m, (170 + sx * ex - r, ey), (170 + sx * ex + r, ey), 255, max(3, t // 2), cv2.LINE_AA)
+            else:
+                punto(m, 170 + sx * ex, ey, r, rng, hueco)
+        rw = int(rng.integers(55, 100)); rh = int(rng.integers(25, 70))
+        k = rng.integers(0, 4)
+        if k == 0:                                      # feliz
+            cv2.ellipse(m, (170, 185), (rw, rh), 0, 15, 165, 255, t, cv2.LINE_AA)
+        elif k == 1:                                    # triste
+            cv2.ellipse(m, (170, 250), (rw, rh), 0, 195, 345, 255, t, cv2.LINE_AA)
+        elif k == 2:                                    # neutra
+            cv2.line(m, (170 - rw, 225), (170 + rw, 225 + int(rng.integers(-8, 9))), 255, t, cv2.LINE_AA)
+        else:                                           # boca abierta
+            cv2.ellipse(m, (170, 190), (rw, rh), 0, 0, 180, 255, -1, cv2.LINE_AA)
+        if rng.random() < 0.2:
+            punto(m, 170, 170, max(4, r // 2), rng)
+        return _recortar(m), 220.0
+
     if subclase == "dibujos":
         m = np.zeros((300, 300), np.uint8)
         t = int(rng.integers(5, 12))
@@ -466,10 +501,10 @@ def componer(glifo_y_ref, rng, lienzo=None, tipos_fondo=None) -> np.ndarray:
 # API
 # ----------------------------------------------------------------------------
 
-def imagen_de_numero(valor: int, rng, lienzo=None) -> np.ndarray:
+def imagen_de_numero(valor: int, rng, lienzo=None, gruesa=None) -> np.ndarray:
     """Imagen RGB uint8 de un número maya 1..19."""
     b, p = L.barras_y_puntos(valor)
-    g = glifo_mano(b, p, rng) if rng.random() < 0.35 else glifo(b, p, rng)
+    g = glifo_mano(b, p, rng) if rng.random() < 0.35 else glifo(b, p, rng, gruesa)
     return componer(g, rng, lienzo=lienzo)
 
 
@@ -484,7 +519,7 @@ PESOS_SUBCLASES = [0.15, 0.17, 0.28, 0.11, 0.07, 0.05, 0.07, 0.10]
 
 
 def generar(raiz_datos="../data", por_clase=800, negativos=10000, semilla=42, lienzo=LIENZO,
-            progreso=True, refuerzo=None, refuerzo_neg=None) -> int:
+            progreso=True, refuerzo=None, refuerzo_neg=None, refuerzo_gruesa=None) -> int:
     from PIL import Image
     raiz = Path(raiz_datos) / "raw" / "synthetic"
     filas, n = [], 0
@@ -521,6 +556,17 @@ def generar(raiz_datos="../data", por_clase=800, negativos=10000, semilla=42, li
             guardar(img, clase, f"synth_{clase}_r{seed}.jpg", clase, "", seed)
             n += 1
 
+    # Refuerzo de barras gruesas (ADR-020): sin mano alzada, solo glifo con barra ancha.
+    for valor, extra in (refuerzo_gruesa or {}).items():
+        clase = f"maya_{int(valor):02d}"
+        b, p = L.barras_y_puntos(int(valor))
+        for i in range(int(extra)):
+            seed = semilla * 1_000_000 + 600_000 + int(valor) * 10_000 + i
+            r = np.random.default_rng(seed)
+            img = componer(glifo(b, p, r, True), r, lienzo=(lienzo, lienzo))
+            guardar(img, clase, f"synth_{clase}_g{seed}.jpg", clase, "", seed)
+            n += 1
+
     # Refuerzo de negativos que SE PARECEN a un número válido. Medido con dibujos de lienzo: 4 barras
     # más k puntos se leían siempre como 15+k (el modelo trataba 4 barras como 3) y solo se
     # rechazaba el 69,8 % de los casi-números. ADR-016.
@@ -529,6 +575,11 @@ def generar(raiz_datos="../data", por_clase=800, negativos=10000, semilla=42, li
         for i in range(int(extra)):
             seed = semilla * 1_000_000 + 800_000 + len(sub) * 100_000 + i
             r = np.random.default_rng(seed)
+            if sub == "carita":
+                img = componer(glifo_negativo("carita", r), r, lienzo=(lienzo, lienzo))
+                guardar(img, "no_valido/dibujos", f"synth_{sub}_s{seed}.jpg", "no_valido", "dibujos", seed)
+                n += 1
+                continue
             if sub == "cuatro_barras":
                 b, p = (4 if r.random() < 0.8 else 5), int(r.integers(0, 5))
             else:                                    # "muchos_puntos": 5 o más puntos
@@ -568,5 +619,6 @@ if __name__ == "__main__":
                 negativos=a.negativos or cfg["sintetico"]["negativos_total"],
                 semilla=cfg["semilla"], lienzo=cfg["sintetico"]["lienzo_px"],
                 refuerzo=cfg["sintetico"].get("refuerzo"),
-                refuerzo_neg=cfg["sintetico"].get("refuerzo_neg"))
+                refuerzo_neg=cfg["sintetico"].get("refuerzo_neg"),
+                refuerzo_gruesa=cfg["sintetico"].get("refuerzo_gruesa"))
     print(f"{n} imágenes generadas")

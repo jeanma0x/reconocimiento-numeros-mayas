@@ -368,4 +368,4 @@ Siguiente sesión: fotos, carpeta de Drive e invitaciones al repo.
 
 ## Presentación (2026-11-21)
 - `/presentacion`: 15 diapositivas animadas (con QR a la demo en el cierre) (ADR-018). Enlace «Diapositivas» en la cabecera de la demo.
-- Modelo en producción: J (20261121-003545-B). Rechazo de casi-números 90,6 % (antes 69,8 %); límite: 4 barras finas aún se aceptan 6 de 24 veces (ADR-019).
+- Modelo en producción: K (20261121-080008-B; barras gruesas y caritas, ADR-020). Rechazo de casi-números 90,6 % (antes 69,8 %); límite: 4 barras finas aún se aceptan 6 de 24 veces (ADR-019).

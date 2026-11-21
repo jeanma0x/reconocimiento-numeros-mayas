@@ -543,3 +543,10 @@ seguía pareciendo plantilla y un defecto real:
 **Decisión.** Se instala el modelo J (corrida 20261121-003545-B): negativos extra de «cuatro barras» (4 500) y «muchos puntos» (1 500) en el entrenamiento.
 **Medido (mismas pruebas que el modelo I):** fotos de Imri 38/38 válidas y 2/2 ceros rechazados; estrés 433/440 (98,4 %); lienzo 181/190 (95,3 %, antes 95,8 %); rechazo de casi-números 87/96 (90,6 %, antes 69,8 %). Tests de paridad e inferencia en verde.
 **Límite que queda:** con barras muy finas (`fino`), 4 barras (+0–4 puntos) aún se aceptan como 15–19 en 6 de 24 casos. Evidencia: `docs/evidencia/modeloJ_fotos_imri.csv` y `ml/data_local/cadena_J.log`.
+
+## ADR-020 — Modelo K en producción (barras gruesas y caritas)
+
+**Problema (fotos de Jean, 2026-11-21).** Un 9 (4 puntos + 1 barra muy gruesa) se leía como 19; un 11 (1 punto + 2 barras gruesas) como 16; una carita feliz como 8. El generador sintético no llegaba a barras tan anchas (máx. 0,17 × largo) y no había caritas como negativo.
+**Decisión.** Barras gruesas (0,17–0,32 × largo) en 22 % de los glifos y refuerzo para 5–15 (`refuerzo_gruesa`); 3 000 caritas como `no_valido` (`carita`). Afinado desde el modelo J, 5 épocas. Corrida 20261121-080008-B.
+**Medido.** Fotos de Jean: 9 → 9 y 11 → 11 (J fallaba las dos); 60 caritas nuevas: 59 rechazadas (J: 56). Imri 38/38, 2/2 ceros. Estrés 431/440 (98,0 %, antes 98,4 %). Lienzo 180/190 (94,7 %, antes 95,3 %). Rechazo de casi-números 87/96 (90,6 %, igual). Paridad e inferencia en verde.
+**Límite.** Cuatro barras muy finas siguen aceptándose como 15–19 en 6 de 24 casos. Las dos fotos de Jean son solo prueba, no se usaron para entrenar.

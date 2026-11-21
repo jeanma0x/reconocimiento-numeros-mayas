@@ -13,11 +13,11 @@ export const D = {
   externas: "4 701",
   clases: 20,
 
-  // Mediciones del modelo instalado (corrida 20261121-003545-B (modelo J))
+  // Mediciones del modelo instalado (corrida 20261121-080008-B (modelo K))
   imriValidas: "38 / 38",
   imriCeros: "2 / 2",
-  estres: 98.4,
-  lienzo: 95.3,
+  estres: 98.0,
+  lienzo: 94.7,
   validacion: 95.8,
   rechazoCasi: 90.6,
 
