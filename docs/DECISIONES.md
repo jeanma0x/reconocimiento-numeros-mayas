@@ -426,3 +426,29 @@ JPEG, margen extra, recorte, perspectiva, ruido) se hizo con las mismas 40 fotos
 para diagnosticar: **sirve para comparar modelos entre sí, no como medida absoluta**. El
 conjunto de prueba sintético de mano alzada es de la propia distribución de F y G, así que
 sobreestima. Lo que falta sigue siendo una mano real ajena.
+
+
+**Actualización 2 (misma noche): modelo H, el instalado.** Con capturas del propio uso de la
+app aparecieron dos fallos que las fotos de Imri no mostraban: (1) puntos dibujados como
+**anillos huecos o garabatos** en el lienzo (el modelo solo conocía puntos rellenos: 7/38 en
+anillo, 7/38 en garabato) y (2) **trocitos de otros números** pegados al borde (el 7 de GC con
+37 % contra 37 % para el 8). Se añadió: puntos huecos y garabato en `synth` (`punto(hueco)`,
+`glifo_mano`), fragmentos de vecinos al construir la caché (`dataset.fragmentos_vecinos`) y
+10 épocas de afinado desde G. Corrida `20261120-223620-B`.
+
+| Prueba | G | **H** |
+|---|---:|---:|
+| Fotos de Imri (38 válidas + 2 ceros) | 37/38 | **38/38** |
+| Estrés sobre fotos reales (`maya.estres`) | 95,7 % | **98,0 %** |
+| Lienzo en 4 estilos (`maya.lienzo_prueba`, escrita aparte del generador) | 56,6 % | **92,1 %** |
+| — anillo / garabato | 7 / 7 de 38 | **34 / 34 de 38** |
+
+Quedan 7 fallos en la prueba de lienzo, todos del **1 y el 2** (un punto o dos puntos solos).
+
+**Bug de caché (importante).** `metadata.json` y `thresholds.json` tenían nombre fijo, `immutable`
+de un año y `force-cache`: un navegador siguió sirviendo el modelo D horas después de desplegar
+otro, y esas capturas se tomaron con él. Ahora las URL llevan `?v=<SHA del despliegue>`
+(`NEXT_PUBLIC_BUILD_ID`). Esto no estaba cubierto por ningún test.
+
+**Corrección de un error mío:** una foto de 3 puntos y 2 barras que el modelo D leyó como 14
+(el 13 real) la di por correcta al verla en pantalla. No lo era.

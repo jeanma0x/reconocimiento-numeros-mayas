@@ -56,9 +56,12 @@ def barra(mask, x0, x1, y, grosor, rng):
         cv2.circle(mask, tuple(pts[rng.integers(0, len(pts))]), k, 255, -1, cv2.LINE_AA)
 
 
-def punto(mask, cx, cy, r, rng):
+def punto(mask, cx, cy, r, rng, hueco=False):
     ejes = (int(max(1, r * rng.uniform(0.85, 1.15))), int(max(1, r * rng.uniform(0.85, 1.15))))
-    cv2.ellipse(mask, (int(cx), int(cy)), ejes, float(rng.uniform(0, 180)), 0, 360, 255, -1, cv2.LINE_AA)
+    # Un punto «dibujado» con lapicero o mouse suele ser un círculo hueco: sin esto, el
+    # modelo solo conocía puntos rellenos y rechazaba el 7/8 de los lienzos con anillos.
+    grosor = -1 if not hueco else int(max(2, r * rng.uniform(0.3, 0.6)))
+    cv2.ellipse(mask, (int(cx), int(cy)), ejes, float(rng.uniform(0, 180)), 0, 360, 255, grosor, cv2.LINE_AA)
 
 
 def _recortar(mask):
@@ -88,6 +91,7 @@ def glifo(barras: int, puntos: int, rng) -> np.ndarray:
     # red usaría el tamaño absoluto del punto como pista y fallaría con medio mundo.
     R = int(T * rng.uniform(0.40, 1.25))           # radio de punto
     R = max(5, R)
+    hueco = rng.random() < 0.20                    # puntos como anillos
     G = int(T * rng.uniform(0.7, 1.8))             # separación entre barras
     D = int(T * rng.uniform(0.9, 2.2))             # separación puntos-barras
 
@@ -114,7 +118,7 @@ def glifo(barras: int, puntos: int, rng) -> np.ndarray:
         else:
             xs = np.linspace(cx - ancho_puntos / 2, cx + ancho_puntos / 2, puntos)
         for x in xs:
-            punto(m, x + rng.normal(0, R * 0.12), y + R + rng.normal(0, R * 0.12), R, rng)
+            punto(m, x + rng.normal(0, R * 0.12), y + R + rng.normal(0, R * 0.12), R, rng, hueco)
         y += 2 * R + (D if barras else 0)
 
     for i in range(barras):
@@ -150,12 +154,24 @@ def glifo_mano(barras: int, puntos: int, rng):
         sep = max(R * 2.2, min(sep, Lb * 0.95 / max(1, puntos - 1)))
         xs = [cx] if puntos == 1 else np.linspace(cx - sep * (puntos - 1) / 2,
                                                   cx + sep * (puntos - 1) / 2, puntos)
+        modo = rng.random()                                  # 22 % anillo, 12 % garabato
         for x in xs:
             ang = np.linspace(0, 2 * np.pi, 24, endpoint=False)
             rad = R * (1 + rng.normal(0, 0.05, 24)) * rng.uniform(0.85, 1.15)
             px = x + rng.normal(0, R * 0.2) + rad * np.cos(ang)
             py = y + R + rng.normal(0, R * 0.2) + rad * np.sin(ang)
-            cv2.fillPoly(m, [np.stack([px, py], 1).astype(np.int32)], 255, cv2.LINE_AA)
+            pts = np.stack([px, py], 1).astype(np.int32)
+            if modo < 0.22:
+                cv2.polylines(m, [pts], True, 255, int(max(2, R * rng.uniform(0.25, 0.55))), cv2.LINE_AA)
+            elif modo < 0.34:
+                esp = np.linspace(0, 1, 30)
+                rr = R * (0.2 + 0.85 * esp) * (1 + rng.normal(0, 0.06, 30))
+                th = 2 * np.pi * 2.2 * esp + rng.uniform(0, 6)
+                sp = np.stack([px.mean() + rr * np.cos(th), py.mean() + rr * np.sin(th)], 1).astype(np.int32)
+                cv2.polylines(m, [sp], False, 255, int(max(2, T // 2 + 1)), cv2.LINE_AA)
+                cv2.polylines(m, [pts], True, 255, int(max(2, T // 2 + 1)), cv2.LINE_AA)
+            else:
+                cv2.fillPoly(m, [pts], 255, cv2.LINE_AA)
         y += 2 * R + (D if barras else 0)
     for i in range(barras):
         largo = int(Lb * rng.uniform(0.7, 1.0))

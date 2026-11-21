@@ -391,6 +391,29 @@ def margen_o_recorte(img: np.ndarray, rng) -> np.ndarray:
     return img[a:h - b, c:w - e]
 
 
+def fragmentos_vecinos(img: np.ndarray, rng) -> np.ndarray:
+    """Pega uno o dos trocitos de tinta tocando el borde, como los restos de otros números
+    de la misma hoja que salen en una foto (el caso del 7 de GC). Deben ignorarse: la red
+    los leía como «varios números» y rechazaba números válidos. ADR-016."""
+    import cv2
+    out = np.ascontiguousarray(img.copy())
+    h, w = out.shape[:2]
+    g = P.a_gris(out)
+    k = int(np.argmax(np.abs(g - np.median(g))))
+    color = tuple(int(v) for v in out.reshape(-1, 3)[k])
+    for _ in range(int(rng.integers(1, 3))):
+        lado = int(rng.integers(0, 4))
+        r = int(max(3, min(h, w) * rng.uniform(0.03, 0.09)))
+        t = rng.uniform(0.15, 0.85)
+        cx, cy = {0: (0, int(h * t)), 1: (w, int(h * t)), 2: (int(w * t), 0), 3: (int(w * t), h)}[lado]
+        if rng.random() < 0.5:
+            cv2.ellipse(out, (cx, cy), (r, int(r * rng.uniform(0.7, 1.3))), 0, 0, 360, color, -1, cv2.LINE_AA)
+        else:
+            dx, dy = (int(w * rng.uniform(0.08, 0.3)), r) if lado in (2, 3) else (r, int(h * rng.uniform(0.08, 0.3)))
+            cv2.rectangle(out, (cx - dx // 2, cy - dy // 2), (cx + dx // 2, cy + dy // 2), color, -1)
+    return out
+
+
 def construir_cache(filas, raiz="../data", split="train", progreso=True, repetir_reales=1, rectangular=True, bordes=True, extra_encuadre=True) -> tuple:
     """`repetir_reales` > 1 duplica las fotos reales del split de entrenamiento: son pocas
     y es lo que de verdad se evalúa; el aumento al vuelo hace distinta cada copia."""
@@ -413,6 +436,9 @@ def construir_cache(filas, raiz="../data", split="train", progreso=True, repetir
         if extra_encuadre and f["fuente"] in ("synth", "externo") and \
                 np.random.default_rng(17_000 + i).random() < 0.4:
             img = margen_o_recorte(img, np.random.default_rng(19_000 + i))
+        if bordes and f["fuente"] in ("synth", "externo") and \
+                np.random.default_rng(21_000 + i).random() < 0.3:
+            img = fragmentos_vecinos(img, np.random.default_rng(23_000 + i))
         t = P.preparar(img)
         X[i] = np.round(t[0] * 255).astype(np.uint8)
         idx = L.indice_de_etiqueta(f["clase"])
