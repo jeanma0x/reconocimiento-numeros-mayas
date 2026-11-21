@@ -1,0 +1,9 @@
+{
+  "n": 40,
+  "n_validas": 38,
+  "n_no_validas": 2,
+  "exactitud_validas": 0.2894736842105263,
+  "rechazo_correcto_no_validas": 1.0,
+  "falso_rechazo": 0.2894736842105263,
+  "exactitud_total": 0.325
+}

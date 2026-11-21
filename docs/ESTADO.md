@@ -3,8 +3,8 @@
 > **Este es el archivo más importante del repositorio.** Se lee al empezar cada sesión de trabajo
 > y se actualiza al terminarla. Si está desactualizado, la siguiente sesión empieza a ciegas.
 
-**Última actualización:** 2026-11-19 (hora de Guatemala)
-**Actualizado por:** sesión de datos externos (Claude + José Julián)
+**Última actualización:** 2026-11-20 (hora de Guatemala)
+**Actualizado por:** sesión de fotos de Imri + diagnóstico (Claude + Jean)
 
 ---
 
@@ -123,6 +123,57 @@ corrida real guardada en `ml/runs/`.**
 | Simulacro con persona ajena | ≥ 13/15 | — |
 
 ## Bitácora
+
+### 2026-11-20 · Fotos de Imri, bug de polaridad y plan final
+Llegaron dos tandas de Imri (GC y GC2, 20 fotos cada una, 1–19 + cero). Quedaron en
+`data/raw/real/imri/` y `data/raw/real/imri/extra_gc2/`. Análisis completo en
+`docs/evidencia/analisis-datasets-imri.md`.
+
+**El modelo piloto acierta 11 de 38 válidas (29 %)** con la política de la app
+(`python -m maya.evaluar_fotos`, CSV en `docs/evidencia/piloto_fotos_imri.csv`).
+Al mirar los tensores salieron dos causas reales (ADR-014), no «modelo crudo»:
+
+1. **Polaridad mal decidida** en 3 de 40 fotos reales y en 52 de 891 sintéticas claras (5,8 %).
+   Nueva regla por mediana, portada a TypeScript; paridad en verde; build en verde.
+2. **Trazo fino ausente** del generador: el 30 % de las muestras ahora lleva barras de 3–8 px.
+
+Además: `/dashboard` escrito (lee de Neon, degrada sin `DATABASE_URL`);
+`ml/src/maya/evaluar_fotos.py` (evalúa cualquier carpeta con la política de la app, sin torch);
+`docs/11-PLAN-FINAL.md` con el cronograma hasta el sábado 07:00.
+
+**Segundo hallazgo (ADR-015):** con el bug de polaridad arreglado, GC (marcador) seguía con 8/19:
+la red leía como «varios números» los trocitos de otros números pegados al borde de la foto.
+Recortar el 4 % de cada borde (paso 1b, en Python y TypeScript, paridad exacta) lo llevó a 17/19
+sin reentrenar. Descartada la hipótesis del relleno a cuadrado (no cambió nada).
+
+**Modelo instalado en `web/public/models/`: corrida `20261120-193733-B`** (CNN propia de
+541 629 parámetros, 2,22 MB, ONNX verificado: 100 % de coincidencia de etiquetas en 200 muestras).
+Entrenada en el Mac de Jean: etapa A de 22 épocas sobre sintético, y afinado con externo
+(4 701), fotos de José (53) y GC2 (19) repetidas ×10, más recorte del 4 %.
+
+| Medición | Resultado | Honesta |
+|---|---|---|
+| Validación (sintético + algunas reales), con política de rechazo | 97,9 % acierto · 0,6 % falso rechazo · 98,8 % rechazo | sí, pero sintética |
+| **GC (Imri, marcador): 19 válidas, mano NUNCA vista** | **15 / 19 = 79 %** | **sí, es la cifra que vale** |
+| GC2 (mano extra): 19 válidas | 19 / 19 | **no**: entró al entrenamiento |
+| Ceros reales (2) | 2 / 2 rechazados | sí, pero n=2 |
+| Piloto anterior en las mismas fotos | 11 / 38 = 29 % | — |
+
+Errores en GC (docs/evidencia/modeloD_fotos_imri.csv): el 3 y el 15 los rechaza la clase
+(«no válido»), el 7 lo rechaza R3 por inconsistencia con confianza baja, y el 13 sale como 14.
+**No cumple todavía la meta de ≥ 90 % en mano desconocida**; mejoró de 29 % a 79 %.
+Todo con n = 19: un error vale 5 puntos porcentuales. Para el rechazo solo hay 2 negativos
+reales de Imri; el rechazo sobre más negativos reales se mide con José (en entrenamiento) y el
+simulacro.
+
+El modelo entrenado antes de ADR-014/015 es incompatible con el preprocesamiento actual y ya
+se reemplazó. Archivos de la corrida y de los datos locales: `ml/runs/` y `ml/data_local/`
+(ambos ignorados por git).
+
+Nota de entorno: en macOS con numpy 2.x `preprocess.py` emite `RuntimeWarning: divide by zero /
+overflow in matmul` en cada imagen (artefacto de Accelerate); los tensores son finitos y los tests
+de paridad pasan. `verificar()` marca un sha256 repetido: son imágenes sintéticas `vacio` idénticas
+(blanco puro) repartidas entre splits; inocuo, pero conviene deduplicarlas.
 
 ### 2026-11-19 · Dataset externo auditado e importado
 

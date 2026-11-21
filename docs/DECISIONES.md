@@ -304,3 +304,77 @@ nuestra métrica. Meterlo en `data/raw/real/`: mentiría en la columna `fuente` 
 leave-one-person-out, que se reparte por autor. Importar `twenty_plus` igualmente y medir
 después si cae la cobertura del 11: cuesta un entrenamiento entero para comprobar algo que la
 geometría ya dice.
+
+
+## ADR-014 · Polaridad por mediana y trazo fino en el sintético
+**Estado:** Aceptada · 2026-11-20 · reemplaza el paso 3 de ADR-004/ADR-005 (regla de inversión)
+
+**Contexto.** Llegaron dos tandas de fotos de Imri (`numerosmayasgc`: 20 fotos con marcador
+grueso; `numerosmayasgc2`: 20 fotos de otra mano, con pluma fina). Se evaluó el modelo piloto
+con ellas antes de entrenar nada: **29 % de acierto en las 38 válidas** (`docs/evidencia/piloto_fotos_imri.csv`).
+Al mirar los tensores de 64×64 que recibía la red aparecieron dos causas concretas, ninguna de
+las cuales es "el piloto está crudo":
+
+1. **Polaridad invertida.** `necesita_inversion` comparaba la media del marco con la del
+   centro. Si el marco tiene sombra, una mesa roja o un borde oscuro, concluía "el fondo es
+   oscuro" y no invertía: la red recibía tinta negra sobre papel blanco, el negativo de todo lo
+   que vio al entrenar. Pasó en 3 de 40 fotos reales, **y en 52 de 891 imágenes sintéticas
+   (5,8 %) con fondo claro inequívoco**, o sea que el propio entrenamiento tenía ruido de
+   polaridad.
+2. **Trazo fino fuera de distribución.** La segunda mano dibuja las barras con pluma fina
+   (~1 px a 64×64) y los puntos con relleno grueso. El generador solo producía barras de 10–25 px
+   sobre largos de 150–230, así que esa combinación no existía.
+
+**Decisión.**
+
+- Paso 3 nuevo: el fondo es la **mediana** (la tinta es siempre minoría); se invierte si
+  `mediana − mínimo > máximo − mediana`, es decir, si la tinta se aleja más hacia lo oscuro que
+  hacia lo claro. No depende del brillo absoluto ni de la posición del glifo. Sobre 891 casos
+  claros del sintético: 0 errores (la regla anterior: 52). Sobre las 40 fotos reales: 40 de 40.
+- `synth.glifo`: en el 30 % de las muestras las barras usan un grosor `Tb` de 3–8 px, mientras
+  puntos y separaciones siguen gobernados por `T`.
+- Portado a `web/lib/preprocess.ts`, fixtures regenerados, `npm run test:parity` en verde.
+
+**Consecuencias.** El modelo piloto en `web/public/models/` fue entrenado con la regla vieja y
+**deja de ser válido**: hay que reentrenar y exportar antes de usar la app. Cualquier modelo
+entrenado antes de este commit es incompatible con el nuevo preprocesamiento.
+
+**Alternativas descartadas.** Percentiles 0,5/99,5 en lugar de mínimo y máximo: fallan con un
+punto único en un pizarrón verde (el punto ocupa <0,5 % de los píxeles y no entra al percentil).
+Decidir por brillo absoluto (`mediana ≥ 110`): acierta igual en el sintético pero es una
+constante arbitraria que se rompe con foto subexpuesta.
+
+
+## ADR-015 · Recorte del 4 % de cada borde y datos rectangulares
+**Estado:** Aceptada · 2026-11-20 · añade el paso 1b al preprocesamiento (ADR-004)
+
+**Contexto.** Tras corregir la polaridad (ADR-014) y reentrenar con fotos de José, el dataset
+externo y GC2, el modelo seguía rechazando 11 de las 19 fotos válidas de GC (Imri, marcador) con
+la cabeza de clase diciendo «no válido» a ~95 % de confianza, mientras las cabezas de barras y
+puntos acertaban. Dos hipótesis, medidas una a una sobre las mismas fotos:
+
+| Hipótesis | Prueba | GC acertadas |
+|---|---|---|
+| Relleno a cuadrado distinto al del entrenamiento (imágenes siempre cuadradas) | recortar a cuadrado central | 18/19 |
+| ídem, atacada en el entrenamiento | recortes rectangulares aleatorios al construir la caché | 8/19 (antes 8/19: sin mejora) |
+| **Trocitos de otros números pegados al borde** (la hoja tenía varios) | recortar solo un margen | 4 %: **17/19** · 8 %: 16/19 · 12 %: 18/19 |
+
+La tercera es la causa: la red lee «varios números» —que debe rechazar (I7)— cuando ve
+fragmentos de vecinos en el borde. El recorte cuadrado funcionaba porque quita esos bordes, no
+por la forma.
+
+**Decisión.** Paso 1b: descartar `int(0,04·lado)` por cada borde, salvo que el resultado quede
+bajo 16 px. Portado a `web/lib/preprocess.ts`; paridad exacta (0,0) en 200 fixtures. Con el modelo
+anterior, sin reentrenar: GC 8→17/19, José 38/38 → 38/38, GC2 19/19 → 18/19. La caché de
+entrenamiento se reconstruye con el mismo paso (usa `preparar`) y además recorta al azar el
+sintético y el externo a formatos de foto sin cortar la tinta (`rectangularizar`).
+
+**Consecuencias.** Un número que ocupe más del ~92 % del ancho o alto de la foto pierde un poco
+de trazo; las instrucciones de captura ya piden «de la mitad a tres cuartos». Cualquier modelo
+entrenado antes de este cambio es incompatible. El 4 % se eligió entre 4/8/12 % por ser el
+menor que resuelve el problema, no por ajuste a una imagen concreta.
+
+**Alternativas descartadas.** Reglas sobre el modelo (aceptar lo que digan las cabezas de
+barras y puntos cuando la clase dice «no válido»): convierte las cabezas en el clasificador y
+aceptaría negativos como puntos bajo las barras (I2). Recorte cuadrado central: corta números
+anchos en fotos apaisadas.

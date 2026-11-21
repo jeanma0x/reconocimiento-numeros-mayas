@@ -53,6 +53,7 @@ cd ../web && npm install && npm run dev
 | [`docs/06-DESPLIEGUE.md`](docs/06-DESPLIEGUE.md) | Vercel + Neon. |
 | [`docs/07-QA-Y-EVALUACION.md`](docs/07-QA-Y-EVALUACION.md) | Métricas, criterios de aceptación y checklist de QA. |
 | [`docs/08-PLAN-DE-ACCION.md`](docs/08-PLAN-DE-ACCION.md) | Plan día por día hasta el 21 de noviembre. |
+| [`docs/11-PLAN-FINAL.md`](docs/11-PLAN-FINAL.md) | **Plan vigente** del viernes 20 al sábado 07:00: rúbrica, compuertas y cronograma. |
 | [`docs/09-PREGUNTAS-DOCENTE.md`](docs/09-PREGUNTAS-DOCENTE.md) | Banco de preguntas y respuestas. **Vale 30% de la nota.** |
 | [`docs/10-PRESENTACION.md`](docs/10-PRESENTACION.md) | Guion y estructura de la exposición. |
 | [`docs/DECISIONES.md`](docs/DECISIONES.md) | Registro de decisiones técnicas (ADR). |
