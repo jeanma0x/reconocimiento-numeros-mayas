@@ -128,6 +128,51 @@ def glifo(barras: int, puntos: int, rng) -> np.ndarray:
     return _recortar(m), float(Lb)
 
 
+def glifo_mano(barras: int, puntos: int, rng):
+    """Número dibujado a mano alzada con mouse, dedo o lapicero fino: trazos finos que
+    tiemblan, cada barra con su propia pendiente y largo, puntos como manchas irregulares
+    y poca regularidad entre ellos. Es lo que produce el lienzo de la aplicación, y lo que
+    escribe el docente en una hoja con la mano (ADR-016). Devuelve (máscara, largo ref)."""
+    Lb = int(rng.integers(150, 260))
+    T = int(rng.integers(3, 20))
+    base = max(T, 6)
+    R = int(max(4, T * rng.uniform(0.7, 2.2)))
+    G = int(base * rng.uniform(1.5, 4.5))
+    D = int(base * rng.uniform(1.2, 3.0))
+    pad = int(base * 3 + Lb * 0.12)
+    alto = (2 * R if puntos else 0) + (D if puntos and barras else 0) + \
+           (barras * T + (barras - 1) * G if barras else 0)
+    m = np.zeros((alto + 2 * pad, Lb + 2 * pad), np.uint8)
+    cx = m.shape[1] // 2
+    y = pad
+    if puntos:
+        sep = R * rng.uniform(2.4, 3.8)
+        sep = max(R * 2.2, min(sep, Lb * 0.95 / max(1, puntos - 1)))
+        xs = [cx] if puntos == 1 else np.linspace(cx - sep * (puntos - 1) / 2,
+                                                  cx + sep * (puntos - 1) / 2, puntos)
+        for x in xs:
+            ang = np.linspace(0, 2 * np.pi, 24, endpoint=False)
+            rad = R * (1 + rng.normal(0, 0.05, 24)) * rng.uniform(0.85, 1.15)
+            px = x + rng.normal(0, R * 0.2) + rad * np.cos(ang)
+            py = y + R + rng.normal(0, R * 0.2) + rad * np.sin(ang)
+            cv2.fillPoly(m, [np.stack([px, py], 1).astype(np.int32)], 255, cv2.LINE_AA)
+        y += 2 * R + (D if barras else 0)
+    for i in range(barras):
+        largo = int(Lb * rng.uniform(0.7, 1.0))
+        x0 = cx - largo // 2 + int(rng.normal(0, base * 0.5))
+        yb = y + T // 2 + i * (T + G)
+        n = int(rng.integers(6, 14))
+        xs = np.linspace(x0, x0 + largo, n)
+        pend = rng.normal(0, 0.05)
+        ys = yb + pend * (xs - x0) + np.cumsum(rng.normal(0, T * 0.22, n))
+        grosor = int(max(1, T * rng.uniform(0.8, 1.3)))
+        pts = np.stack([xs, ys], 1).astype(np.int32)
+        cv2.polylines(m, [pts], False, 255, grosor, cv2.LINE_AA)
+        for e in (pts[0], pts[-1]):
+            cv2.circle(m, tuple(int(v) for v in e), max(1, grosor // 2), 255, -1, cv2.LINE_AA)
+    return _recortar(m), float(Lb)
+
+
 def glifo_concha(rng) -> np.ndarray:
     """El cero maya: un óvalo acostado con trazos internos, estilo concha."""
     w, h = rng.integers(200, 260), rng.integers(90, 130)
@@ -408,7 +453,8 @@ def componer(glifo_y_ref, rng, lienzo=None, tipos_fondo=None) -> np.ndarray:
 def imagen_de_numero(valor: int, rng, lienzo=None) -> np.ndarray:
     """Imagen RGB uint8 de un número maya 1..19."""
     b, p = L.barras_y_puntos(valor)
-    return componer(glifo(b, p, rng), rng, lienzo=lienzo)
+    g = glifo_mano(b, p, rng) if rng.random() < 0.35 else glifo(b, p, rng)
+    return componer(g, rng, lienzo=lienzo)
 
 
 def imagen_negativa(subclase: str, rng, lienzo=None) -> np.ndarray:

@@ -378,3 +378,31 @@ menor que resuelve el problema, no por ajuste a una imagen concreta.
 barras y puntos cuando la clase dice «no válido»): convierte las cabezas en el clasificador y
 aceptaría negativos como puntos bajo las barras (I2). Recorte cuadrado central: corta números
 anchos en fotos apaisadas.
+
+
+## ADR-016 · Cuñas de mesa en el entrenamiento y sintético a mano alzada
+**Estado:** Aceptada · 2026-11-20 · complementa ADR-015
+
+**Contexto.** Con el recorte de borde (ADR-015) la mano de prueba GC quedó en 15/19. Los 4
+errores tenían en común una **cuña clara pegada al costado o arriba** del tensor: es la mesa
+oscura que rodea la hoja, que al invertir la polaridad se vuelve clara. El sintético y el
+externo, siempre con la hoja ocupando todo el encuadre, nunca la mostraron.
+
+**Decisión.** Al construir la caché, el 45 % de las imágenes sintéticas y externas recibe una o
+dos cuñas de color uniforme (mesa oscura, madera, cartulina, azul) pegadas al borde, de 2–20 %
+del ancho y con el filo ligeramente inclinado (`dataset.agregar_borde_mesa`). Afinado desde el
+checkpoint anterior, 8 épocas.
+
+**Resultado** (`docs/evidencia/modeloE_fotos_imri.csv`): GC, mano **nunca vista**: **19/19**
+(antes 15/19). GC2: 18/19 (entró a entrenar, no cuenta como medición). Ceros: 2/2 rechazados.
+Validación sintética 96,8 % (más baja que antes porque ahora incluye cuñas).
+
+**Límites que hay que decir en voz alta.** n = 19 en la mano de prueba: un error son 5 puntos
+porcentuales, y 19/19 no prueba 100 %. La mano de prueba la usé para elegir entre 4/8/12 % de
+recorte (ADR-015) y para diagnosticar los errores que motivaron esta decisión: **está
+parcialmente contaminada como medición**. La cifra honesta es la del simulacro con una persona
+ajena, que todavía no se ha hecho.
+
+**Además.** `synth.glifo_mano` (trazo fino que tiembla, barras con pendiente propia, puntos
+irregulares) quedó en el generador al 35 % de las muestras para cubrir el dibujo con mouse o
+lapicero; **el modelo instalado todavía no se entrenó con él**.

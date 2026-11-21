@@ -146,29 +146,22 @@ la red leía como «varios números» los trocitos de otros números pegados al 
 Recortar el 4 % de cada borde (paso 1b, en Python y TypeScript, paridad exacta) lo llevó a 17/19
 sin reentrenar. Descartada la hipótesis del relleno a cuadrado (no cambió nada).
 
-**Modelo instalado en `web/public/models/`: corrida `20261120-193733-B`** (CNN propia de
+**Modelo instalado en `web/public/models/`: corrida `20261120-202202-B`** (CNN propia de
 541 629 parámetros, 2,22 MB, ONNX verificado: 100 % de coincidencia de etiquetas en 200 muestras).
-Entrenada en el Mac de Jean: etapa A de 22 épocas sobre sintético, y afinado con externo
-(4 701), fotos de José (53) y GC2 (19) repetidas ×10, más recorte del 4 %.
+Pipeline: etapa A de 22 épocas sobre sintético; afinado con externo (4 701), fotos de José (53) y
+GC2 (19) repetidas ×10, recorte del 4 % (ADR-015) y cuñas de mesa (ADR-016).
 
 | Medición | Resultado | Honesta |
 |---|---|---|
-| Validación (sintético + algunas reales), con política de rechazo | 97,9 % acierto · 0,6 % falso rechazo · 98,8 % rechazo | sí, pero sintética |
-| **GC (Imri, marcador): 19 válidas, mano NUNCA vista** | **15 / 19 = 79 %** | **sí, es la cifra que vale** |
-| GC2 (mano extra): 19 válidas | 19 / 19 | **no**: entró al entrenamiento |
-| Ceros reales (2) | 2 / 2 rechazados | sí, pero n=2 |
-| Piloto anterior en las mismas fotos | 11 / 38 = 29 % | — |
+| Validación (sintético con cuñas + algunas reales) | 96,8 % | sí, pero sintética |
+| **GC (Imri, marcador): 19 válidas, mano NUNCA vista en entrenamiento** | **19 / 19** | **parcial**: la usé para diagnosticar y elegir el recorte; n = 19 |
+| GC2 (mano extra): 19 válidas | 18 / 19 | no: entró al entrenamiento |
+| Ceros reales (2) | 2 / 2 rechazados | sí, pero n = 2 |
+| Historia en las mismas fotos | piloto 29 % → 71 % → 79 % → 100 % en GC | — |
 
-Errores en GC (docs/evidencia/modeloD_fotos_imri.csv): el 3 y el 15 los rechaza la clase
-(«no válido»), el 7 lo rechaza R3 por inconsistencia con confianza baja, y el 13 sale como 14.
-**No cumple todavía la meta de ≥ 90 % en mano desconocida**; mejoró de 29 % a 79 %.
-Todo con n = 19: un error vale 5 puntos porcentuales. Para el rechazo solo hay 2 negativos
-reales de Imri; el rechazo sobre más negativos reales se mide con José (en entrenamiento) y el
-simulacro.
-
-El modelo entrenado antes de ADR-014/015 es incompatible con el preprocesamiento actual y ya
-se reemplazó. Archivos de la corrida y de los datos locales: `ml/runs/` y `ml/data_local/`
-(ambos ignorados por git).
+Falta la medición que de verdad cuenta: **el simulacro con una persona ajena** (10 números a mano
+y 5 inválidos), sin tocar nada. Tampoco se ha probado con fotos de cámara propia ni con dibujo
+en el lienzo de la app. Rechazo: solo hay 2 negativos reales fuera de entrenamiento.
 
 Nota de entorno: en macOS con numpy 2.x `preprocess.py` emite `RuntimeWarning: divide by zero /
 overflow in matmul` en cada imagen (artefacto de Accelerate); los tensores son finitos y los tests
