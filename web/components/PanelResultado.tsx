@@ -75,13 +75,126 @@ function Leyenda() {
   );
 }
 
-/** El análisis en tres pasos, pensado para quien nunca ha visto una red neuronal. */
+/**
+ * El análisis en tres pasos, pensado para quien nunca ha visto una red neuronal.
+ *
+ * OJO: las cabezas de barras y puntos solo se entrenaron con números válidos, así que ante
+ * una foto de una persona devuelven igualmente *algún* conteo. Presentarlo como «contó 4
+ * puntos» sería engañoso, por eso el paso 2 cuenta una historia distinta según el motivo del
+ * rechazo y solo muestra las fichas cuando el conteo significa algo.
+ */
 function Explicacion({ r, consistente }: { r: Resultado; consistente: boolean }) {
   const pct = (x: number) => `${(x * 100).toFixed(x < 0.1 ? 1 : 0)} %`;
-  const segunda = r.top[1];
+  const nombre = (v: number | null | undefined) => (v == null ? "no válido" : `el ${v}`);
+  const [primera, segunda] = r.top;
+  const total = 5 * r.barras + r.puntos;
+
+  let paso2: { titulo: string; cuerpo: React.ReactNode };
+  let paso3: { titulo: string; cuerpo: React.ReactNode };
+
+  if (!r.rechazada) {
+    paso2 = {
+      titulo: "Contó las barras y los puntos",
+      cuerpo: (
+        <>
+          <SumaMaya barras={r.barras} puntos={r.puntos} />
+          <p>En el sistema maya cada barra vale 5 y cada punto vale 1.</p>
+        </>
+      ),
+    };
+    paso3 = {
+      titulo: `Eligió el ${r.valor}`,
+      cuerpo: (
+        <p>
+          Con {pct(r.confianza)} de confianza.
+          {segunda ? ` La segunda opción (${nombre(segunda.valor)}) quedó en ${pct(segunda.probabilidad)}.` : ""}{" "}
+          {consistente
+            ? "Lo que contó coincide con el número elegido, así que la respuesta es confiable."
+            : "Ojo: lo que contó no coincide con el número elegido."}
+        </p>
+      ),
+    };
+  } else if (r.motivo === "inconsistencia") {
+    paso2 = {
+      titulo: "Contó las barras y los puntos",
+      cuerpo: (
+        <>
+          <SumaMaya barras={r.barras} puntos={r.puntos} />
+          <p>
+            Contó {r.barras} {r.barras === 1 ? "barra" : "barras"} y {r.puntos}{" "}
+            {r.puntos === 1 ? "punto" : "puntos"}, que suman {total}.
+          </p>
+        </>
+      ),
+    };
+    paso3 = {
+      titulo: "Descartó la imagen",
+      cuerpo: (
+        <p>
+          Había propuesto {nombre(primera?.valor)}, pero lo que contó suma {total}. Como las dos
+          lecturas no coinciden, no se fía de ninguna.
+        </p>
+      ),
+    };
+  } else if (r.motivo === "baja_confianza") {
+    paso2 = {
+      titulo: "Comparó con los 19 números",
+      cuerpo: (
+        <p>
+          Ninguno se parecía lo bastante. Lo más cercano fue {nombre(primera?.valor)} con{" "}
+          {pct(primera?.probabilidad ?? r.confianza)}.
+        </p>
+      ),
+    };
+    paso3 = {
+      titulo: "Descartó la imagen",
+      cuerpo: <p>Su confianza quedó por debajo del mínimo para dar un número, y prefiere no adivinar.</p>,
+    };
+  } else if (r.motivo === "margen") {
+    paso2 = {
+      titulo: "Comparó con los 19 números",
+      cuerpo: (
+        <p>
+          Dudó entre {nombre(primera?.valor)} ({pct(primera?.probabilidad ?? 0)}) y{" "}
+          {nombre(segunda?.valor)} ({pct(segunda?.probabilidad ?? 0)}).
+        </p>
+      ),
+    };
+    paso3 = {
+      titulo: "No se decidió",
+      cuerpo: <p>Las dos opciones estaban demasiado cerca para elegir una, y prefiere no adivinar.</p>,
+    };
+  } else {
+    // clase_no_valida: la red reconoce directamente que NO es un número maya del 1 al 19
+    paso2 = {
+      titulo: "Buscó la forma de un número maya",
+      cuerpo: (
+        <p>
+          No encontró puntos arriba y barras abajo, ordenados como en un número maya. Por eso aquí
+          no hay conteo que mostrar.
+        </p>
+      ),
+    };
+    paso3 = {
+      titulo: "Descartó la imagen",
+      cuerpo: (
+        <p>
+          Con {pct(r.confianza)} de confianza concluyó que no es un número maya del 1 al 19. Puede
+          ser un objeto, una persona, un dibujo, el cero, un número de otro sistema o uno fuera de
+          rango.
+        </p>
+      ),
+    };
+  }
+
+  // Si la red descartó la forma, sus cabezas de barras y puntos no significan nada
+  const cabezasUtiles = !(r.rechazada && r.motivo === "clase_no_valida");
+
   return (
     <section className="explicacion" aria-label="Cómo llegó la red a esta respuesta">
-      <h3 className="subtitulo">Cómo llegó a esta respuesta</h3>
+      <h3 className="subtitulo">
+        {r.rechazada ? "Por qué la descartó" : "Cómo llegó a esta respuesta"}
+      </h3>
       <ol className="pasos">
         <li>
           <span className="n" aria-hidden="true">
@@ -98,9 +211,8 @@ function Explicacion({ r, consistente }: { r: Resultado; consistente: boolean })
             2
           </span>
           <div>
-            <b>Contó las barras y los puntos</b>
-            <SumaMaya barras={r.barras} puntos={r.puntos} />
-            <p>En el sistema maya cada barra vale 5 y cada punto vale 1.</p>
+            <b>{paso2.titulo}</b>
+            {paso2.cuerpo}
           </div>
         </li>
         <li>
@@ -108,23 +220,8 @@ function Explicacion({ r, consistente }: { r: Resultado; consistente: boolean })
             3
           </span>
           <div>
-            <b>{r.rechazada ? "Descartó la imagen" : `Eligió el ${r.valor}`}</b>
-            {r.rechazada ? (
-              <p>
-                {r.motivo ? FRASE_MOTIVO[r.motivo] : ""} Su confianza en ese descarte fue de{" "}
-                {pct(r.confianza)}.
-              </p>
-            ) : (
-              <p>
-                Con {pct(r.confianza)} de confianza.
-                {segunda
-                  ? ` La segunda opción (${segunda.valor ?? "no válido"}) quedó en ${pct(segunda.probabilidad)}.`
-                  : ""}{" "}
-                {consistente
-                  ? "Lo que contó coincide con el número elegido, así que la respuesta es confiable."
-                  : "Ojo: lo que contó no coincide con el número elegido."}
-              </p>
-            )}
+            <b>{paso3.titulo}</b>
+            {paso3.cuerpo}
           </div>
         </li>
       </ol>
@@ -138,25 +235,38 @@ function Explicacion({ r, consistente }: { r: Resultado; consistente: boolean })
               {LADO}×{LADO}, 1 canal
             </b>
           </div>
+          {cabezasUtiles ? (
+            <>
+              <div className="fila">
+                <span>Cabeza de barras</span>
+                <b>{r.barras}</b>
+              </div>
+              <div className="fila">
+                <span>Cabeza de puntos</span>
+                <b>{r.puntos}</b>
+              </div>
+              <div className="fila">
+                <span>5 × barras + puntos</span>
+                <b>{total}</b>
+              </div>
+              <div className="fila">
+                <span>Coincide con la clase</span>
+                <b>{consistente ? "sí" : "no"}</b>
+              </div>
+              <div className="fila">
+                <span>Confianza de esas cabezas</span>
+                <b>{(r.confianzaAux * 100).toFixed(0)}%</b>
+              </div>
+            </>
+          ) : (
+            <p>
+              Las cabezas de barras y puntos solo se entrenaron con números válidos: ante una imagen
+              que la red descarta, su conteo no significa nada y no se muestra.
+            </p>
+          )}
           <div className="fila">
-            <span>Cabeza de barras</span>
-            <b>{r.barras}</b>
-          </div>
-          <div className="fila">
-            <span>Cabeza de puntos</span>
-            <b>{r.puntos}</b>
-          </div>
-          <div className="fila">
-            <span>5 × barras + puntos</span>
-            <b>{5 * r.barras + r.puntos}</b>
-          </div>
-          <div className="fila">
-            <span>Coincide con la clase</span>
-            <b>{consistente ? "sí" : "no"}</b>
-          </div>
-          <div className="fila">
-            <span>Confianza de esas cabezas</span>
-            <b>{(r.confianzaAux * 100).toFixed(0)}%</b>
+            <span>Motivo del descarte</span>
+            <b>{r.rechazada ? (r.motivo ?? "—") : "—"}</b>
           </div>
           <div className="fila">
             <span>Inferencia</span>
