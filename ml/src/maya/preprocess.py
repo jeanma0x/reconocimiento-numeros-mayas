@@ -35,10 +35,25 @@ import numpy as np
 
 LADO = 64
 MARGEN_MARCO = 0.10      # fracción del borde usada para estimar el fondo
+MARGEN_RECORTE = 0.04   # fracción de cada borde que se descarta (ADR-015)
 CENTRO = 0.50            # fracción central usada para estimar el contenido
 PCT_BAJO, PCT_ALTO = 1.0, 99.0
 RANGO_MINIMO = 20.0      # niveles de gris (sobre 255) por debajo de los cuales no se estira
 EPS = 1e-6
+
+
+# --- Paso 1b ------------------------------------------------------------------
+
+def recortar_borde(gris: np.ndarray) -> np.ndarray:
+    """Descarta el 4 % de cada borde. Las fotos de una hoja con varios números traen
+    trocitos de los vecinos pegados al borde, y la red los lee como «varios números» y
+    rechaza: medido con las fotos de Imri, sin este paso 8/19 aciertan y con él 17/19
+    (José 38/38 en ambos casos). Imágenes pequeñas se dejan intactas. ADR-015."""
+    alto, ancho = gris.shape
+    my, mx = int(alto * MARGEN_RECORTE), int(ancho * MARGEN_RECORTE)
+    if alto - 2 * my < 16 or ancho - 2 * mx < 16:
+        return gris
+    return gris[my:alto - my, mx:ancho - mx]
 
 
 # --- Paso 2 -------------------------------------------------------------------
@@ -68,16 +83,20 @@ def _mascara_centro(alto: int, ancho: int) -> np.ndarray:
 
 
 def necesita_inversion(gris: np.ndarray) -> bool:
-    """True si el fondo es más claro que el contenido (tinta oscura sobre papel).
+    """True si el fondo es más claro que la tinta (tinta oscura sobre papel).
 
-    Compara la media del marco con la del centro. Así una foto de tinta negra sobre
-    papel blanco y un trazo blanco sobre pizarrón verde llegan iguales a la red.
+    La tinta es siempre la minoría de los píxeles, así que el fondo es la mediana.
+    La tinta es oscura si se aleja más de la mediana hacia abajo (mínimo) que hacia
+    arriba (máximo). No depende del brillo absoluto ni de dónde esté el glifo.
+
+    Sustituye a la regla anterior (media del marco > media del centro), que fallaba
+    cuando el marco tenía sombra, mesa o un borde oscuro: el papel quedaba "claro
+    sobre claro" y la red recibía el negativo. Medido el 2026-11-20: 3 de 40 fotos
+    reales y 52 de 891 sintéticas (5,8%) tenían la polaridad mal, incluido el
+    propio dataset de entrenamiento. Ver ADR-014.
     """
-    alto, ancho = gris.shape
-    marco, centro = _mascara_marco(alto, ancho), _mascara_centro(alto, ancho)
-    if not marco.any() or not centro.any():      # imágenes diminutas: nada que comparar
-        return False
-    return float(gris[marco].mean()) > float(gris[centro].mean())
+    mediana = float(np.percentile(gris, 50.0))
+    return (mediana - float(gris.min())) > (float(gris.max()) - mediana)
 
 
 # --- Paso 4 -------------------------------------------------------------------
@@ -160,7 +179,7 @@ def preparar(imagen_rgb: np.ndarray) -> np.ndarray:
         alfa = imagen_rgb[:, :, 3:4].astype(np.float64) / 255.0
         imagen_rgb = (imagen_rgb[:, :, :3] * alfa + 255 * (1 - alfa)).astype(np.uint8)
 
-    g = a_gris(imagen_rgb)                             # 2
+    g = recortar_borde(a_gris(imagen_rgb))             # 1b + 2
     if necesita_inversion(g):                          # 3
         g = 255.0 - g
     g = estirar_contraste(g)                           # 4

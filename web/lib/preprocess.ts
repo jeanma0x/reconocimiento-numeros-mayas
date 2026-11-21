@@ -21,6 +21,7 @@
 
 export const LADO = 64;
 export const MARGEN_MARCO = 0.1; // fracción del borde usada para estimar el fondo
+export const MARGEN_RECORTE = 0.04; // fracción de cada borde que se descarta (ADR-015)
 export const CENTRO = 0.5; // fracción central usada para estimar el contenido
 export const PCT_BAJO = 1.0;
 export const PCT_ALTO = 99.0;
@@ -70,6 +71,24 @@ export function aGris(rgba: Uint8ClampedArray | Uint8Array, alto: number, ancho:
   return g;
 }
 
+/** Paso 1b: descarta el 4 % de cada borde (trocitos de números vecinos). ADR-015. */
+function recortarBorde(
+  g: Float64Array,
+  alto: number,
+  ancho: number,
+): { g: Float64Array; alto: number; ancho: number } {
+  const my = ent(alto * MARGEN_RECORTE);
+  const mx = ent(ancho * MARGEN_RECORTE);
+  if (alto - 2 * my < 16 || ancho - 2 * mx < 16) return { g, alto, ancho };
+  const nAlto = alto - 2 * my;
+  const nAncho = ancho - 2 * mx;
+  const out = new Float64Array(nAlto * nAncho);
+  for (let y = 0; y < nAlto; y++) {
+    for (let x = 0; x < nAncho; x++) out[y * nAncho + x] = g[(y + my) * ancho + (x + mx)];
+  }
+  return { g: out, alto: nAlto, ancho: nAncho };
+}
+
 /** Índices del marco: `_mascara_marco` de Python. */
 function indicesMarco(alto: number, ancho: number): number[] {
   const my = Math.max(1, ent(alto * MARGEN_MARCO));
@@ -84,34 +103,16 @@ function indicesMarco(alto: number, ancho: number): number[] {
   return idx;
 }
 
-/** Índices del centro: `_mascara_centro` de Python. */
-function indicesCentro(alto: number, ancho: number): number[] {
-  const y0 = ent((alto * (1 - CENTRO)) / 2);
-  const y1 = ent((alto * (1 + CENTRO)) / 2);
-  const x0 = ent((ancho * (1 - CENTRO)) / 2);
-  const x1 = ent((ancho * (1 + CENTRO)) / 2);
-  const idx: number[] = [];
-  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) idx.push(y * ancho + x);
-  return idx;
-}
-
-function media(g: Float64Array, idx: number[]): number {
-  if (idx.length === 0) return NaN;
-  let s = 0;
-  for (const i of idx) s += g[i];
-  return s / idx.length;
-}
-
 /**
- * Paso 3. True si el fondo es más claro que el contenido (tinta oscura sobre papel).
- * Así una foto de tinta negra sobre papel y un trazo blanco sobre pizarrón verde
- * llegan iguales a la red.
+ * Paso 3. True si el fondo es más claro que la tinta (tinta oscura sobre papel).
+ * La tinta es la minoría de los píxeles, así que el fondo es la mediana; la tinta es
+ * oscura si se aleja más de la mediana hacia abajo que hacia arriba. Réplica exacta
+ * de `necesita_inversion` en Python (ADR-014).
  */
-export function necesitaInversion(g: Float64Array, alto: number, ancho: number): boolean {
-  const marco = indicesMarco(alto, ancho);
-  const centro = indicesCentro(alto, ancho);
-  if (marco.length === 0 || centro.length === 0) return false;
-  return media(g, marco) > media(g, centro);
+export function necesitaInversion(g: Float64Array, _alto: number, _ancho: number): boolean {
+  const ordenado = Float64Array.from(g).sort();
+  const mediana = percentil(ordenado, 50);
+  return mediana - ordenado[0] > ordenado[ordenado.length - 1] - mediana;
 }
 
 /**
@@ -232,10 +233,13 @@ export function escalarPorBloques(
  */
 export function preparar(
   rgba: Uint8ClampedArray | Uint8Array,
-  alto: number,
-  ancho: number,
+  altoOrig: number,
+  anchoOrig: number,
 ): Float32Array {
-  let g = aGris(rgba, alto, ancho); // 2
+  const rec = recortarBorde(aGris(rgba, altoOrig, anchoOrig), altoOrig, anchoOrig); // 1b + 2
+  let g = rec.g;
+  const alto = rec.alto;
+  const ancho = rec.ancho;
   if (necesitaInversion(g, alto, ancho)) {
     // 3
     const inv = new Float64Array(g.length);
