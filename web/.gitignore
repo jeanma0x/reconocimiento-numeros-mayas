@@ -8,3 +8,5 @@ public/ort/
 fixtures/
 .env
 .env*.local
+.vercel
+.env*
