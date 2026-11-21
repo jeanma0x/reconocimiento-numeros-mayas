@@ -215,8 +215,8 @@
 /* ---------- 11 · Mejora ---------- */
 .escalera { display: flex; align-items: flex-end; gap: calc(var(--u) * 1.4); height: calc(var(--u) * 20); margin-top: calc(var(--u) * 1.6); border-bottom: 2px solid var(--linea-fuerte); }
 .peldano { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
-.peldano .v { font: 500 calc(var(--u) * 1.9)/1 var(--serif); margin-bottom: 8px; font-variant-numeric: tabular-nums; opacity: clamp(0, calc(var(--paso) - 1), 1); transition: opacity .5s calc(var(--k) * .28s + .7s); }
-.peldano .b { width: 100%; border-radius: 8px 8px 0 0; height: calc(var(--alto) * clamp(0, calc(var(--paso) - 1), 1)); background: linear-gradient(180deg, var(--jade), rgba(78,224,168,.25)); box-shadow: 0 0 22px rgba(78,224,168,.25); transition: height 1s cubic-bezier(.3, 1.1, .3, 1) calc(var(--k) * .28s); }
+.peldano .v { font: 500 calc(var(--u) * 1.9)/1 var(--serif); margin-bottom: 8px; font-variant-numeric: tabular-nums; opacity: clamp(0, var(--paso), 1); transition: opacity .5s calc(var(--k) * .28s + .7s); }
+.peldano .b { width: 100%; border-radius: 8px 8px 0 0; height: calc(var(--alto) * clamp(0, var(--paso), 1)); background: linear-gradient(180deg, var(--jade), rgba(78,224,168,.25)); box-shadow: 0 0 22px rgba(78,224,168,.25); transition: height 1s cubic-bezier(.3, 1.1, .3, 1) calc(var(--k) * .28s); }
 .peldano.ultimo .b { background: linear-gradient(180deg, var(--ocre), rgba(255,189,79,.25)); box-shadow: 0 0 30px rgba(255,189,79,.4); }
 .etiquetas { display: flex; gap: calc(var(--u) * 1.4); margin-top: 10px; }
 .etiquetas span { flex: 1; text-align: center; font-size: calc(var(--u) * 1.05); color: var(--gris); line-height: 1.25; }
