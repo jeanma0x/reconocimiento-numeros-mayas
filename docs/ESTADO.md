@@ -124,6 +124,18 @@ corrida real guardada en `ml/runs/`.**
 
 ## Bitácora
 
+### 2026-11-21 · Rediseño de la interfaz (ADR-017)
+Auditoría de UI/UX y rediseño completo del frontend, sin tocar el modelo ni `preprocess`. Sistema
+visual propio (piedra caliza, jade, cinabrio; Newsreader + IBM Plex servidas desde el propio sitio),
+glifo maya en el dictamen, leyenda de los 19 números, íconos SVG, `aria-live`, pestañas con teclado,
+objetivos de 44 px, `prefers-reduced-motion`, favicon e indicador de conexión. HOLGURA del lienzo
+1,15 → 1,5 (prueba de lienzo 91,1 → 95,8 %).
+
+Verificado en producción con Chrome automatizado (`e1cfff1`): las tres tipografías cargan, el 14 y
+el 7 se reconocen, el cero se rechaza, **y con la red cortada sigue reconociendo** (el estado dice
+«Sin conexión · funciona igual»). Sin respuestas con error. Despliegue anterior (modelo I, interfaz
+vieja, `5cfc4e5`) disponible para restaurar desde Vercel si algo fallara.
+
 ### 2026-11-20 · Fotos de Imri, bug de polaridad y plan final
 Llegaron dos tandas de Imri (GC y GC2, 20 fotos cada una, 1–19 + cero). Quedaron en
 `data/raw/real/imri/` y `data/raw/real/imri/extra_gc2/`. Análisis completo en
