@@ -531,3 +531,9 @@ seguía pareciendo plantilla y un defecto real:
   opacidad), puntos y barras del glifo que aparecen uno a uno, medidor y barras que se llenan y
   un barrido sobre la imagen cuando llega el resultado. Solo `transform`/`opacity`; con
   `prefers-reduced-motion` el fondo se detiene y el barrido desaparece.
+
+## ADR-018 — Presentación integrada en `/presentacion` (13 diapositivas)
+
+**Decisión.** La presentación vive en la propia app (`web/app/presentacion`), sin depender de otro programa ni de internet. Segunda versión: 13 diapositivas (antes 20), lenguaje sencillo, un solo mensaje por diapositiva y animaciones que muestran el flujo (convolución con filtro real, recorrido imagen→respuesta, capas, curva de entrenamiento, anillos de resultados, escalera de mejora). Escenario oscuro propio, independiente del tema de la demo.
+**Cifras.** Todas salen de `web/app/presentacion/datos.ts` (corrida 20261120-231151-B). Si cambia el modelo instalado, se actualiza ahí.
+**Control.** ←/→/Espacio avanzan por pasos, `F` pantalla completa, `#N` en la URL. Revisión automática de desbordes en 1366×768, 1920×1080, 1440×900, 1024×768 y 1280×720, en cada paso de cada diapositiva.

@@ -1,21 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useState } from "react";
 
-/** Estilo con el número de paso en el que aparece un elemento (--n). */
-export const N = (n: number, extra: CSSProperties = {}) =>
-  ({ "--n": n, ...extra }) as CSSProperties;
+export const N = (n: number, extra: CSSProperties = {}) => ({ "--n": n, ...extra }) as CSSProperties;
 
 /** Fragmento: aparece cuando el presentador avanza hasta el paso `n`. */
-export function F({
-  n,
-  className = "",
-  style,
-  children,
-}: {
-  n: number;
-  className?: string;
-  style?: CSSProperties;
-  children: ReactNode;
-}) {
+export function F({ n, className = "", style, children }: { n: number; className?: string; style?: CSSProperties; children: ReactNode }) {
   return (
     <div className={`f ${className}`} style={N(n, style)}>
       {children}
@@ -23,59 +12,44 @@ export function F({
   );
 }
 
-/** Encabezado de cada lámina: capítulo + título (con una palabra en cursiva de acento). */
-export function Cabeza({
-  kicker,
-  children,
-  lead,
-}: {
-  kicker: string;
-  children: ReactNode;
-  lead?: ReactNode;
-}) {
+/** Encabezado de lámina: etiqueta + título corto (una palabra en cursiva de acento). */
+export function Cabeza({ k, children, sub }: { k: string; children: ReactNode; sub?: ReactNode }) {
   return (
-    <header className="cabeza-lamina">
-      <p className="k">{kicker}</p>
-      <h2 className="t">{children}</h2>
-      {lead && <p className="lead">{lead}</p>}
+    <header>
+      <p className="k">{k}</p>
+      <h2 className="h">{children}</h2>
+      {sub && <p className="sub">{sub}</p>}
     </header>
   );
 }
 
-/** Flecha de diagrama. */
-export function Flecha({ vertical = false }: { vertical?: boolean }) {
-  return (
-    <svg
-      className={`flecha${vertical ? " vertical" : ""}`}
-      width={vertical ? 14 : 44}
-      height={vertical ? 34 : 14}
-      viewBox={vertical ? "0 0 14 34" : "0 0 44 14"}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {vertical ? (
-        <>
-          <path d="M7 1v30" />
-          <path d="m2 26 5 6 5-6" />
-        </>
-      ) : (
-        <>
-          <path d="M1 7h40" />
-          <path d="m36 2 6 5-6 5" />
-        </>
-      )}
-    </svg>
-  );
+/** Cuenta de 0 a `hasta` cuando `activo` es verdadero. */
+export function useContar(hasta: number, activo: boolean, ms = 1700) {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    if (!activo) {
+      setV(0);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const paso = (t: number) => {
+      const p = Math.min(1, (t - t0) / ms);
+      setV(hasta * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) raf = requestAnimationFrame(paso);
+    };
+    raf = requestAnimationFrame(paso);
+    return () => cancelAnimationFrame(raf);
+  }, [hasta, activo, ms]);
+  return v;
 }
+
+export const miles = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+export const dec = (n: number, d = 1) => n.toFixed(d).replace(".", ",");
 
 export type Diapo = {
   id: string;
   titulo: string;
-  /** Cuántas veces se puede avanzar dentro de la lámina antes de pasar a la siguiente. */
   pasos: number;
   Contenido: (p: { paso: number }) => React.JSX.Element;
 };

@@ -364,3 +364,8 @@ protocolo de captura ahora pide una **mano extra por persona** (alguien externo 
 19 números): así el dataset pasa de 4 a 8 letras distintas, y el conjunto de prueba se arma con
 las fotos de Imri y su mano extra, que nadie que entrena el modelo habrá visto.
 Siguiente sesión: fotos, carpeta de Drive e invitaciones al repo.
+
+
+## Presentación (2026-11-21)
+- `/presentacion`: 13 diapositivas animadas (ADR-018). Enlace «Diapositivas» en la cabecera de la demo.
+- Modelo en producción: I (20261120-231151-B). La cadena J (rechazo de 4 barras) no llegó a entrenar; límite documentado: rechaza ~7 de cada 10 casi-números.

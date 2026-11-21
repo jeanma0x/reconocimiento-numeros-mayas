@@ -80,6 +80,9 @@ export default function Presentacion() {
 
   return (
     <div className="deck" style={{ "--paso": paso } as React.CSSProperties}>
+      <div className="fondo" aria-hidden="true">
+        <div className="rejilla" />
+      </div>
       <div className="deck-top">
         <span className="marca-mini">
           <GlifoMaya valor={19} ancho={30} />
@@ -98,6 +101,11 @@ export default function Presentacion() {
 
       <main className="lamina" key={i} aria-live="polite" aria-label={`Lámina ${i + 1} de ${total}`}>
         <Contenido paso={paso} />
+        {i > 0 && (
+          <span className="fantasma" aria-hidden="true">
+            {String(i + 1).padStart(2, "0")}
+          </span>
+        )}
       </main>
 
       <div className="deck-pie">
