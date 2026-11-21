@@ -13,13 +13,13 @@ export const D = {
   externas: "4 701",
   clases: 20,
 
-  // Mediciones del modelo instalado (corrida 20261120-231151-B)
+  // Mediciones del modelo instalado (corrida 20261121-003545-B (modelo J))
   imriValidas: "38 / 38",
   imriCeros: "2 / 2",
   estres: 98.4,
-  lienzo: 95.8,
+  lienzo: 95.3,
   validacion: 95.8,
-  rechazoCasi: 69.8,
+  rechazoCasi: 90.6,
 
   // Evolución sobre las mismas 38 fotos válidas de Imri (cada punto es una corrida real)
   evolucion: [

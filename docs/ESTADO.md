@@ -368,4 +368,4 @@ Siguiente sesión: fotos, carpeta de Drive e invitaciones al repo.
 
 ## Presentación (2026-11-21)
 - `/presentacion`: 15 diapositivas animadas (con QR a la demo en el cierre) (ADR-018). Enlace «Diapositivas» en la cabecera de la demo.
-- Modelo en producción: I (20261120-231151-B). La cadena J (rechazo de 4 barras) no llegó a entrenar; límite documentado: rechaza ~7 de cada 10 casi-números.
+- Modelo en producción: J (20261121-003545-B). Rechazo de casi-números 90,6 % (antes 69,8 %); límite: 4 barras finas aún se aceptan 6 de 24 veces (ADR-019).

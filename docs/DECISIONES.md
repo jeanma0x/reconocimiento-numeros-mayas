@@ -537,3 +537,9 @@ seguía pareciendo plantilla y un defecto real:
 **Decisión.** La presentación vive en la propia app (`web/app/presentacion`), sin depender de otro programa ni de internet. Segunda versión: 13 diapositivas (antes 20), lenguaje sencillo, un solo mensaje por diapositiva y animaciones que muestran el flujo (convolución con filtro real, recorrido imagen→respuesta, capas, curva de entrenamiento, anillos de resultados, escalera de mejora). Escenario oscuro propio, independiente del tema de la demo.
 **Cifras.** Todas salen de `web/app/presentacion/datos.ts` (corrida 20261120-231151-B). Si cambia el modelo instalado, se actualiza ahí.
 **Control.** ←/→/Espacio avanzan por pasos, `F` pantalla completa, `#N` en la URL. Revisión automática de desbordes en 1366×768, 1920×1080, 1440×900, 1024×768 y 1280×720, en cada paso de cada diapositiva.
+
+## ADR-019 — Modelo J en producción (rechazo de 4 barras)
+
+**Decisión.** Se instala el modelo J (corrida 20261121-003545-B): negativos extra de «cuatro barras» (4 500) y «muchos puntos» (1 500) en el entrenamiento.
+**Medido (mismas pruebas que el modelo I):** fotos de Imri 38/38 válidas y 2/2 ceros rechazados; estrés 433/440 (98,4 %); lienzo 181/190 (95,3 %, antes 95,8 %); rechazo de casi-números 87/96 (90,6 %, antes 69,8 %). Tests de paridad e inferencia en verde.
+**Límite que queda:** con barras muy finas (`fino`), 4 barras (+0–4 puntos) aún se aceptan como 15–19 en 6 de 24 casos. Evidencia: `docs/evidencia/modeloJ_fotos_imri.csv` y `ml/data_local/cadena_J.log`.
