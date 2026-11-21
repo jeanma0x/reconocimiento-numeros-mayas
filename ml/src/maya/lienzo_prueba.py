@@ -46,12 +46,18 @@ def dibujar(valor: int, estilo: str, rng) -> np.ndarray:
         xs = np.linspace(cx - 190, cx + 190, 8) + rng.normal(0, 3, 8)
         ys = yb + np.cumsum(rng.normal(0, 1.6, 8)) + rng.normal(0, 3)
         cv2.polylines(c, [np.stack([xs, ys], 1).astype(np.int32)], False, (0, 0, 0), T, cv2.LINE_AA)
-    # recorte alrededor de la tinta, como hace el lienzo de la app
-    ys_, xs_ = np.nonzero(c.min(axis=2) < 128)
-    lado = int(max(ys_.max() - ys_.min(), xs_.max() - xs_.min()) * 1.3) + 20
+    # Mismo recorte que web/components/LienzoDibujo.tsx: lado = max(18 × grosor, 1,15 × tinta).
+    # El grosor del control de la app es el del trazo. Una versión anterior recortaba
+    # ajustado a la tinta y hacía que un punto solo llenara el cuadro: medía otra cosa.
+    ys_, xs_ = np.nonzero(c.min(axis=2) < 200)
+    lado = int(round(max(18 * T, max(ys_.max() - ys_.min() + 1, xs_.max() - xs_.min() + 1) * 1.15)))
     my, mx = (ys_.min() + ys_.max()) // 2, (xs_.min() + xs_.max()) // 2
-    y1, x1 = max(0, my - lado // 2), max(0, mx - lado // 2)
-    return c[y1:y1 + lado, x1:x1 + lado]
+    out = np.full((lado, lado, 3), 255, np.uint8)
+    sy, sx = my - lado // 2, mx - lado // 2
+    ya, xa = max(0, sy), max(0, sx)
+    yb, xb = min(c.shape[0], sy + lado), min(c.shape[1], sx + lado)
+    out[ya - sy:yb - sy, xa - sx:xb - sx] = c[ya:yb, xa:xb]
+    return out
 
 
 def correr(modelo: Path, umbrales: dict):

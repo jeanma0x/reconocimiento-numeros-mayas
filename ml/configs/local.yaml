@@ -11,6 +11,7 @@ datos:
 sintetico:
   por_clase_valida: 1500
   negativos_total: 15000
+  refuerzo: {1: 1500, 2: 1500, 3: 1200, 6: 800, 7: 800, 9: 800, 15: 800, 16: 800}
   lienzo_px: 256
   # Rangos de variación (docs/03-DATASET.md)
   grosor_barra: [0.03, 0.14]   # fracción del alto del glifo
@@ -49,9 +50,9 @@ entrenamiento:
     calentamiento_epocas: 3
     paciencia: 8
   etapa_b:
-    epocas: 10
+    epocas: 8
     lote: 64
-    lr: 1.5e-4
+    lr: 1.2e-4
     repeticiones_reales: 10
     fraccion_sintetico: 0.3
     paciencia: 4

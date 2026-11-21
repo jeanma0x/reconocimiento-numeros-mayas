@@ -84,7 +84,7 @@ def glifo(barras: int, puntos: int, rng) -> np.ndarray:
     # barras de ~1 px a 64x64 que la red nunca había visto). Tb es el grosor solo de las
     # barras; T sigue gobernando puntos y separaciones, que son independientes del
     # instrumento con que se trazó la barra. ADR-014.
-    Tb = int(rng.integers(3, 9)) if rng.random() < 0.30 else int(T)
+    Tb = int(rng.integers(2, 9)) if rng.random() < 0.35 else int(T)
     # El rango de radio de punto es ancho a propósito. Una persona que dibuja con el
     # dedo o el mouse da un toque cuyo diámetro es el grosor del trazo, o sea R ≈ T/2;
     # el extremo alto cubre a quien pinta puntos gordos. Si el rango fuera estrecho, la
@@ -484,7 +484,7 @@ PESOS_SUBCLASES = [0.15, 0.17, 0.28, 0.11, 0.07, 0.05, 0.07, 0.10]
 
 
 def generar(raiz_datos="../data", por_clase=800, negativos=10000, semilla=42, lienzo=LIENZO,
-            progreso=True) -> int:
+            progreso=True, refuerzo=None) -> int:
     from PIL import Image
     raiz = Path(raiz_datos) / "raw" / "synthetic"
     filas, n = [], 0
@@ -510,6 +510,16 @@ def generar(raiz_datos="../data", por_clase=800, negativos=10000, semilla=42, li
             n += 1
         if progreso:
             print(f"  {clase}: {por_clase}", flush=True)
+
+    # Refuerzo de las clases que más fallan en las pruebas con dibujos (1, 2, 3: pocos puntos
+    # solos; 6, 7, 9, 15, 16: barras finas con puntos). ADR-016.
+    for valor, extra in (refuerzo or {}).items():
+        clase = f"maya_{int(valor):02d}"
+        for i in range(int(extra)):
+            seed = semilla * 1_000_000 + 500_000 + int(valor) * 10_000 + i
+            img = imagen_de_numero(int(valor), np.random.default_rng(seed), lienzo=(lienzo, lienzo))
+            guardar(img, clase, f"synth_{clase}_r{seed}.jpg", clase, "", seed)
+            n += 1
 
     rng_sub = np.random.default_rng(semilla + 777)
     for i in range(negativos):
@@ -539,5 +549,6 @@ if __name__ == "__main__":
     n = generar(raiz_datos=cfg["datos"]["raiz"],
                 por_clase=a.por_clase or cfg["sintetico"]["por_clase_valida"],
                 negativos=a.negativos or cfg["sintetico"]["negativos_total"],
-                semilla=cfg["semilla"], lienzo=cfg["sintetico"]["lienzo_px"])
+                semilla=cfg["semilla"], lienzo=cfg["sintetico"]["lienzo_px"],
+                refuerzo=cfg["sintetico"].get("refuerzo"))
     print(f"{n} imágenes generadas")

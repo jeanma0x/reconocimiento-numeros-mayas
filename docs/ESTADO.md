@@ -146,12 +146,13 @@ la red leía como «varios números» los trocitos de otros números pegados al 
 Recortar el 4 % de cada borde (paso 1b, en Python y TypeScript, paridad exacta) lo llevó a 17/19
 sin reentrenar. Descartada la hipótesis del relleno a cuadrado (no cambió nada).
 
-**Modelo instalado en `web/public/models/`: corrida `20261120-223620-B` («H»)** (CNN propia de
+**Modelo instalado en `web/public/models/`: corrida `20261120-231151-B` («I»)** (CNN propia de
 541 629 parámetros, 2,22 MB, ONNX verificado: 100 % de coincidencia de etiquetas en 200 muestras).
 Pipeline: etapa A de 22 épocas; afinados sucesivos con externo (4 701), fotos de José (53) y GC2 (19)
 repetidas ×10, recorte del 4 % (ADR-015), cuñas de mesa, sintético a mano alzada y márgenes/recortes
 aleatorios (ADR-016). Comparación E/F/G y pruebas de estrés al final de ADR-016.
-Fotos de Imri 38/38; estrés sobre fotos reales 98,0 %; lienzo en 4 estilos 92,1 % (fallan el 1 y el 2).
+Fotos de Imri 40/40; estrés sobre fotos reales 98,4 %; lienzo en 4 estilos (recorte de la app) 91,4 %.
+Fallan: 1, 2 y 3 dibujados solo con puntos huecos y barras de lapicero muy finas (<1 px a 64×64).
 
 | Medición | Resultado | Honesta |
 |---|---|---|

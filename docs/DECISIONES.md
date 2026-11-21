@@ -452,3 +452,25 @@ otro, y esas capturas se tomaron con él. Ahora las URL llevan `?v=<SHA del desp
 
 **Corrección de un error mío:** una foto de 3 puntos y 2 barras que el modelo D leyó como 14
 (el 13 real) la di por correcta al verla en pantalla. No lo era.
+
+
+**Actualización 3: modelo I, el instalado (`20261120-231151-B`).** La prueba de lienzo se
+corrigió para usar **el mismo recorte que la app** (`lado = max(18 × grosor, 1,15 × tinta)`);
+la versión anterior recortaba ajustado a la tinta y hacía que un punto solo llenara el cuadro.
+Con la prueba corregida, G cae a 52,6 % y H queda en 87,5 %. Se reforzó el sintético con
+1 500 imágenes extra del 1 y del 2, 1 200 del 3 y 800 de cada uno de 6, 7, 9, 15 y 16, con
+barras de 2–8 px, y se afinó 8 épocas desde H.
+
+| Prueba | H | **I** |
+|---|---:|---:|
+| Fotos de Imri (38 válidas + 2 ceros) | 40/40 | **40/40** |
+| Estrés sobre fotos reales | 98,0 % | **98,4 %** |
+| Lienzo, 4 estilos con el recorte de la app | 87,5 % | **91,4 %** |
+| — relleno / anillo / fino / garabato | 38 / 34 / 30 / 31 de 38 | **38 / 36 / 33 / 32 de 38** |
+
+**Lo que sigue fallando** (prueba de lienzo): un punto o dos puntos solos dibujados como anillo o
+garabato (1, 2, 3), y barras de lapicero muy finas (3–6 px sobre ~380 px, es decir ~0,7 px a
+64×64): pierde una barra y lee 15 como 10, 16 como 11, 9 como 4, 7 como 2. Lo segundo es un
+límite de resolución de la entrada de 64×64 (ADR-005): una barra de menos de un píxel pierde el
+contraste al reducir. Subir la entrada a 96 o 128 px lo atacaría de raíz, pero obliga a rehacer
+export, paridad y todos los entrenamientos; no se hizo.
