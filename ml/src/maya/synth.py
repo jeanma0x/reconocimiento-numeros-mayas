@@ -484,7 +484,7 @@ PESOS_SUBCLASES = [0.15, 0.17, 0.28, 0.11, 0.07, 0.05, 0.07, 0.10]
 
 
 def generar(raiz_datos="../data", por_clase=800, negativos=10000, semilla=42, lienzo=LIENZO,
-            progreso=True, refuerzo=None) -> int:
+            progreso=True, refuerzo=None, refuerzo_neg=None) -> int:
     from PIL import Image
     raiz = Path(raiz_datos) / "raw" / "synthetic"
     filas, n = [], 0
@@ -521,6 +521,23 @@ def generar(raiz_datos="../data", por_clase=800, negativos=10000, semilla=42, li
             guardar(img, clase, f"synth_{clase}_r{seed}.jpg", clase, "", seed)
             n += 1
 
+    # Refuerzo de negativos que SE PARECEN a un número válido. Medido con dibujos de lienzo: 4 barras
+    # más k puntos se leían siempre como 15+k (el modelo trataba 4 barras como 3) y solo se
+    # rechazaba el 69,8 % de los casi-números. ADR-016.
+    for sub, extra in (refuerzo_neg or {}).items():
+        rng_r = np.random.default_rng(semilla + 4242 + len(sub))
+        for i in range(int(extra)):
+            seed = semilla * 1_000_000 + 800_000 + len(sub) * 100_000 + i
+            r = np.random.default_rng(seed)
+            if sub == "cuatro_barras":
+                b, p = (4 if r.random() < 0.8 else 5), int(r.integers(0, 5))
+            else:                                    # "muchos_puntos": 5 o más puntos
+                b, p = int(r.integers(0, 4)), int(r.integers(5, 8))
+            g = glifo_mano(b, p, r) if r.random() < 0.35 else glifo(b, p, r)
+            img = componer(g, r, lienzo=(lienzo, lienzo))
+            guardar(img, "no_valido/casi_valido", f"synth_{sub}_s{seed}.jpg", "no_valido", "casi_valido", seed)
+            n += 1
+
     rng_sub = np.random.default_rng(semilla + 777)
     for i in range(negativos):
         sub = str(rng_sub.choice(SUBCLASES_SINTETICAS, p=PESOS_SUBCLASES))
@@ -550,5 +567,6 @@ if __name__ == "__main__":
                 por_clase=a.por_clase or cfg["sintetico"]["por_clase_valida"],
                 negativos=a.negativos or cfg["sintetico"]["negativos_total"],
                 semilla=cfg["semilla"], lienzo=cfg["sintetico"]["lienzo_px"],
-                refuerzo=cfg["sintetico"].get("refuerzo"))
+                refuerzo=cfg["sintetico"].get("refuerzo"),
+                refuerzo_neg=cfg["sintetico"].get("refuerzo_neg"))
     print(f"{n} imágenes generadas")

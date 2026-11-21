@@ -193,6 +193,9 @@ export default function Reconocedor() {
             <IconoPantalla tamano={18} />
             Presentar
           </button>
+          <a className="boton" href="/presentacion">
+            Diapositivas
+          </a>
           <a className="boton" href="/acerca">
             Cómo funciona
           </a>

@@ -21,8 +21,8 @@ from .calibrate import decidir
 from .preprocess import preparar
 
 
-def dibujar(valor: int, estilo: str, rng) -> np.ndarray:
-    b, p = L.barras_y_puntos(valor)
+def dibujar(valor: int, estilo: str, rng, bp: tuple[int, int] | None = None) -> np.ndarray:
+    b, p = bp if bp is not None else L.barras_y_puntos(valor)
     c = np.full((560, 720, 3), 255, np.uint8)
     T = {"relleno": 14, "anillo": 12, "fino": 4, "garabato": 8, "toque": 16}[estilo] + int(rng.integers(-1, 3))
     # "toque": quien dibuja con el dedo o el mouse a grosor por defecto: el punto es un toque
@@ -81,6 +81,27 @@ def correr(modelo: Path, umbrales: dict):
     return res, fallos
 
 
+# Casi números: tienen que RECHAZARSE (4+ barras valen 20 o más; 5+ puntos no existen)
+INVALIDOS = [(4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (5, 0), (5, 2), (0, 5), (0, 6), (1, 5), (2, 6), (3, 5)]
+
+
+def correr_rechazo(modelo: Path, umbrales: dict):
+    import onnxruntime as ort
+    ses = ort.InferenceSession(str(modelo), providers=["CPUExecutionProvider"])
+    res, fallos = {}, []
+    for estilo in ("relleno", "anillo", "fino", "toque"):
+        for bp in INVALIDOS:
+            for sem in range(2):
+                img = dibujar(0, estilo, np.random.default_rng(7000 + 37 * bp[0] + 11 * bp[1] + sem), bp)
+                lg, lb, lp = ses.run(["logits", "barras", "puntos"], {"input": preparar(img)[None]})
+                d = decidir(lg[0], lb[0], lp[0], umbrales)
+                ok = d["rechazada"]
+                res.setdefault(estilo, []).append(ok)
+                if not ok:
+                    fallos.append((estilo, f"{bp[0]}b{bp[1]}p", d["valor"]))
+    return res, fallos
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--modelo", required=True, type=Path)
@@ -92,3 +113,9 @@ if __name__ == "__main__":
     tot = [x for v in res.values() for x in v]
     print(f"  TOTAL     {sum(tot)}/{len(tot)} = {sum(tot) / len(tot):.1%}")
     print("  fallos:", sorted(set(fallos), key=str)[:40])
+    rr, ff = correr_rechazo(a.modelo, json.loads(a.umbrales.read_text(encoding="utf-8")))
+    for k, v in rr.items():
+        print(f"  RECHAZO {k:9s} {sum(v)}/{len(v)}")
+    tt = [x for v in rr.values() for x in v]
+    print(f"  RECHAZO TOTAL {sum(tt)}/{len(tt)} = {sum(tt) / len(tt):.1%}")
+    print("  aceptados por error:", sorted(set(ff), key=str)[:60])
