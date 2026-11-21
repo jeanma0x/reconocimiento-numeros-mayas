@@ -2,53 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import GlifoMaya from "@/components/GlifoMaya";
 import type { Metadata } from "@/lib/tipos";
-
-/** Dibuja un número maya a partir de (barras, puntos). */
-function Glifo({ valor }: { valor: number }) {
-  const barras = Math.floor(valor / 5);
-  const puntos = valor % 5;
-  const W = 92;
-  const H = 76;
-  const BARRA_W = 64;
-  const BARRA_H = 9;
-  const SEP_BARRA = 6;
-  const R = 5.5;
-  const SEP_PUNTO = 15;
-  const HUECO = 10;
-
-  const altoTotal =
-    (puntos ? 2 * R : 0) +
-    (puntos && barras ? HUECO : 0) +
-    (barras ? barras * BARRA_H + (barras - 1) * SEP_BARRA : 0);
-  let y = (H - altoTotal) / 2;
-  const elementos: React.ReactNode[] = [];
-
-  if (puntos) {
-    const x0 = W / 2 - ((puntos - 1) * SEP_PUNTO) / 2;
-    for (let i = 0; i < puntos; i++) {
-      elementos.push(<circle key={`p${i}`} cx={x0 + i * SEP_PUNTO} cy={y + R} r={R} />);
-    }
-    y += 2 * R + (barras ? HUECO : 0);
-  }
-  for (let i = 0; i < barras; i++) {
-    elementos.push(
-      <rect
-        key={`b${i}`}
-        x={W / 2 - BARRA_W / 2}
-        y={y + i * (BARRA_H + SEP_BARRA)}
-        width={BARRA_W}
-        height={BARRA_H}
-        rx={4}
-      />,
-    );
-  }
-  return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="currentColor" aria-hidden="true">
-      {elementos}
-    </svg>
-  );
-}
 
 export default function Acerca() {
   const [meta, setMeta] = useState<Metadata | null>(null);
@@ -66,9 +21,13 @@ export default function Acerca() {
   return (
     <div className="envoltorio">
       <header className="cabecera">
-        <h1 className="titulo">
-          Cómo funciona <span>· números mayas con CNN</span>
-        </h1>
+        <a className="marca" href="/" aria-label="Numerales mayas, inicio">
+          <GlifoMaya valor={19} ancho={44} className="marca-glifo" />
+          <h1 className="titulo">
+            Cómo funciona
+            <span>Numerales mayas con CNN</span>
+          </h1>
+        </a>
         <nav>
           <a className="boton" href="/">
             ← Volver al reconocedor
@@ -76,6 +35,7 @@ export default function Acerca() {
         </nav>
       </header>
 
+      <main id="contenido">
       <section className="panel" style={{ marginBottom: 18 }}>
         <h2>El sistema de numeración</h2>
         <p style={{ marginTop: 0 }}>
@@ -93,7 +53,7 @@ export default function Acerca() {
           {Array.from({ length: 19 }, (_, i) => i + 1).map((v) => (
             <div className="celda-numero" key={v}>
               <div className="n">{v}</div>
-              <Glifo valor={v} />
+              <GlifoMaya valor={v} />
               <div className="c">
                 {Math.floor(v / 5)}b · {v % 5}p
               </div>
@@ -164,9 +124,10 @@ export default function Acerca() {
             </tbody>
           </table>
           <p style={{ color: "var(--gris)", fontSize: 13, marginBottom: 0 }}>
-            Medidas sobre el conjunto de prueba, que son fotos de una persona excluida por
-            completo del entrenamiento. Es una evaluación más dura que un reparto al azar, y lo
-            más parecido a una mano desconocida.
+            Medidas sobre el conjunto de prueba de la corrida, que mezcla imágenes sintéticas que
+            la red no vio con fotos de una persona excluida del entrenamiento. Las cifras de
+            las fotos reales, con n pequeño, están en <code>docs/DECISIONES.md</code> (ADR-016).
+            Un guion significa que esa corrida no se evaluó sobre este conjunto.
           </p>
         </section>
       </div>
@@ -185,6 +146,8 @@ export default function Acerca() {
           opciones más probables sea demasiado pequeño.
         </p>
       </section>
+
+      </main>
 
       <footer className="pie-pagina">
         <span>Proyecto 02 · Inteligencia Artificial · UVG Campus Sur</span>

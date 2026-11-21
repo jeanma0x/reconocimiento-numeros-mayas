@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { IconoCamara } from "@/components/Iconos";
+
 /**
  * Cámara en vivo. Es la vía más rápida cuando el docente dibuja un número a mano
  * durante la presentación: apuntar y capturar, sin pasar por fotografiar, transferir
@@ -43,7 +45,7 @@ export default function CapturaCamara({
         }
       } catch {
         onError(
-          "No se pudo abrir la cámara. Revisá el permiso del navegador, o usá el modo Archivo o Dibujar.",
+          "No se pudo abrir la cámara. Revisa el permiso del navegador, o usa el modo Archivo o Dibujar.",
         );
       }
     })();
@@ -65,14 +67,20 @@ export default function CapturaCamara({
 
   return (
     <>
-      <div className="vista-previa">
-        <video ref={video} playsInline muted />
+      <div className="marco">
+        <div className="vista-previa">
+          <video ref={video} playsInline muted aria-label="Vista de la cámara" />
+        </div>
       </div>
       <div className="barra-acciones">
         <button className="boton primario" onClick={capturar} disabled={!lista}>
+          <IconoCamara tamano={18} />
           Capturar
         </button>
       </div>
+      <p className="pista">
+        Encuadra un solo número, bien iluminado, ocupando buena parte de la imagen.
+      </p>
     </>
   );
 }

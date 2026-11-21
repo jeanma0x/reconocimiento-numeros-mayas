@@ -1,5 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 
+import GlifoMaya from "@/components/GlifoMaya";
+
 /**
  * /dashboard — evidencia para la exposición. Lee de Neon en el servidor.
  *
@@ -70,9 +72,13 @@ export default async function Dashboard() {
   return (
     <div className="envoltorio">
       <header className="cabecera">
-        <h1 className="titulo">
-          Evidencia <span>· predicciones registradas</span>
-        </h1>
+        <a className="marca" href="/" aria-label="Numerales mayas, inicio">
+          <GlifoMaya valor={19} ancho={44} className="marca-glifo" />
+          <h1 className="titulo">
+            Evidencia
+            <span>Predicciones registradas</span>
+          </h1>
+        </a>
         <nav>
           <a className="boton" href="/">
             ← Volver al reconocedor
@@ -80,6 +86,7 @@ export default async function Dashboard() {
         </nav>
       </header>
 
+      <main id="contenido">
       {error && (
         <p className="aviso" role="status">
           {error} La demostración no depende de esto: el reconocimiento corre en el navegador.
@@ -174,6 +181,7 @@ export default async function Dashboard() {
           </section>
         </>
       )}
+      </main>
     </div>
   );
 }

@@ -474,3 +474,42 @@ garabato (1, 2, 3), y barras de lapicero muy finas (3–6 px sobre ~380 px, es d
 límite de resolución de la entrada de 64×64 (ADR-005): una barra de menos de un píxel pierde el
 contraste al reducir. Subir la entrada a 96 o 128 px lo atacaría de raíz, pero obliga a rehacer
 export, paridad y todos los entrenamientos; no se hizo.
+
+
+## ADR-017 · Rediseño de la interfaz y recorte del lienzo
+**Estado:** Aceptada · 2026-11-21 · refina ADR-010 (CSS propio, sin Tailwind)
+
+**Contexto.** Auditoría de UI/UX del 21 de noviembre con la guía de la skill `ui-ux-pro-max`
+y capturas del uso real. Hallazgos principales: íconos con caracteres Unicode (⏳ ◻ ⬆ ✓ ⚠);
+el resultado no se anunciaba a lectores de pantalla; pestañas sin navegación por teclado ni
+`tabpanel`; sin `<main>`, enlace «saltar al contenido» ni `prefers-reduced-motion`; botones de
+~37 px (el mínimo táctil es 44); sin identidad visual; el dictamen mostraba un número arábigo
+sin el número maya que leyó la red; estado vacío que no decía qué reconoce ni qué rechaza.
+
+**Decisión.** La skill recomendó automáticamente «claymorphism, índigo y naranja, Fredoka» y
+calificó el modo oscuro de anti-patrón: es el aspecto genérico y juguetón que se quería evitar
+y no corresponde a un trabajo universitario serio, así que **no se siguió esa recomendación**
+(sí sus reglas de accesibilidad e interacción). Dirección elegida, una «lámina de estudio»:
+
+- Paleta de piedra caliza y tinta; **jade** (aciertos), **cinabrio** (rechazos), **ocre** (duda).
+  Todo texto ≥ 4,5:1 en claro y en oscuro; el estado nunca se comunica solo con color.
+- Tipografía: Newsreader (serifa editorial, números y títulos), IBM Plex Sans (interfaz) e IBM
+  Plex Mono (datos). Servidas por `next/font` desde el propio sitio: sin internet siguen
+  funcionando (invariante I5).
+- Líneas finas en lugar de sombras, esquinas de 6 px, marcas de recorte en las esquinas de la
+  imagen, etiquetas en mono con espaciado.
+- `GlifoMaya` (SVG): el dictamen dibuja el número maya que corresponde, la leyenda del estado
+  vacío lista los 19, y el mismo glifo es el logotipo. Set de íconos SVG propio (`Iconos.tsx`).
+- Accesibilidad: `aria-live` con el resultado, pestañas con flechas/Inicio/Fin, `tabpanel`,
+  `<main>`, enlace para saltar, foco visible, objetivos de 44 px, `prefers-reduced-motion`.
+- Indicador de conexión: «sin conexión · funciona igual». Favicon propio.
+- Se mantuvo el modo presentación (tecla P) y todas las rutas.
+
+**Recorte del lienzo.** `HOLGURA` de 1,15 a **1,5**. Con `maya.lienzo_prueba` (dibujos en 5
+estilos, con el mismo recorte que la app): 1,15 → 91,1 %; 1,5 → 95,8 %; 1,8 → 94,7 %;
+2,2 → 91,1 %; 2,8 → 87,9 %. Con 1,15 la tinta ocupaba ~87 % del cuadro, fuera de lo que vio el
+modelo al entrenar (la barra, ~26–72 %). Solo cambia el encuadre del dibujo; no toca el modelo
+ni `preprocess` (la paridad no se ve afectada).
+
+**Límite conocido.** Un dibujo con puntos muy separados y lejos de la barra se lee como un
+arreglo «disperso» y se rechaza: es comportamiento esperado, no un fallo.

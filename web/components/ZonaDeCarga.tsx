@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { IconoSubir } from "@/components/Iconos";
+
 const TIPOS = ["image/png", "image/jpeg", "image/webp", "image/bmp", "image/heic", "image/heif"];
 const MAX_BYTES = 20 * 1024 * 1024;
 
@@ -71,13 +73,15 @@ export default function ZonaDeCarga({
         }}
       >
         <div>
-          <div className="icono" aria-hidden="true">
-            ⬆
-          </div>
-          <div className="fuerte">Arrastrá una imagen aquí</div>
+          <span className="icono">
+            <IconoSubir tamano={24} />
+          </span>
+          <div className="fuerte">Arrastra una imagen aquí</div>
           <div className="tenue">
-            o hacé clic para elegir un archivo · también podés pegar con Ctrl+V
+            o haz clic para elegir un archivo · también puedes pegarla con <kbd>Ctrl</kbd>+
+            <kbd>V</kbd>
           </div>
+          <div className="tenue">PNG, JPG, WebP · hasta 20 MB · un solo número por imagen</div>
         </div>
       </button>
       <input
@@ -85,6 +89,7 @@ export default function ZonaDeCarga({
         type="file"
         accept="image/*"
         hidden
+        aria-label="Elegir una imagen"
         onChange={(e) => {
           aceptar(e.target.files?.[0], "archivo");
           e.target.value = "";

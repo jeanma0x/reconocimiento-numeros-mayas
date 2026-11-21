@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { IconoBorrar, IconoRayo } from "@/components/Iconos";
+
 const ANCHO = 680;
 const ALTO = 520;
 /**
@@ -25,7 +27,10 @@ const ALTO = 520;
  * hasta un tamaño que la red nunca vio, y por eso el 2 fallaba siempre.
  */
 const LADO_POR_GROSOR = 18;
-const HOLGURA = 1.15; // si el trazo es más grande que eso, se amplía el recorte
+// Cuánto más grande que la tinta es el recorte. Medido con `maya.lienzo_prueba` (dibujos en
+// 5 estilos con este mismo recorte): 1,15 → 91,1 %; 1,5 → 95,8 %; 1,8 → 94,7 %; 2,2 → 91,1 %.
+// Con 1,15 la tinta llenaba ~87 % del cuadro, fuera de lo que vio el modelo al entrenar.
+const HOLGURA = 1.5;
 
 /**
  * Lienzo para dibujar con mouse o dedo. Es la vía más confiable para las pruebas
@@ -144,23 +149,29 @@ export default function LienzoDibujo({ onListo }: { onListo: (blob: Blob) => voi
 
   return (
     <>
-      <div className="vista-previa" style={{ background: "#fff" }}>
-        <canvas
-          ref={lienzo}
-          width={ANCHO}
-          height={ALTO}
-          style={{ touchAction: "none", cursor: "crosshair" }}
-          onPointerDown={empezar}
-          onPointerMove={mover}
-          onPointerUp={soltar}
-          onPointerLeave={soltar}
-        />
+      <div className="marco">
+        <div className="vista-previa" style={{ background: "#fff" }}>
+          <canvas
+            ref={lienzo}
+            width={ANCHO}
+            height={ALTO}
+            role="img"
+            aria-label="Lienzo de dibujo: dibuja con el mouse o el dedo un número maya"
+            style={{ touchAction: "none", cursor: "crosshair" }}
+            onPointerDown={empezar}
+            onPointerMove={mover}
+            onPointerUp={soltar}
+            onPointerLeave={soltar}
+          />
+        </div>
       </div>
       <div className="barra-acciones">
         <button className="boton primario" disabled={vacio} onClick={exportar}>
+          <IconoRayo tamano={18} />
           Reconocer dibujo
         </button>
         <button className="boton" onClick={limpiar} disabled={vacio}>
+          <IconoBorrar tamano={18} />
           Borrar
         </button>
         <label className="control-grosor">
@@ -171,13 +182,14 @@ export default function LienzoDibujo({ onListo }: { onListo: (blob: Blob) => voi
             max={40}
             value={grosor}
             onChange={(e) => setGrosor(Number(e.target.value))}
+            aria-label="Grosor del trazo"
           />
           <span className="muestra-grosor" style={{ width: grosor, height: grosor }} />
         </label>
       </div>
       <p className="pista">
-        Dibujá los puntos arriba y las barras abajo. El grosor del trazo marca la
-        escala: subilo para trazos gruesos y bajalo para finos, como harías en papel.
+        Dibuja los puntos arriba y las barras abajo. El grosor del trazo marca la escala: súbelo
+        para trazos gruesos y bájalo para finos, como harías en papel.
       </p>
     </>
   );
