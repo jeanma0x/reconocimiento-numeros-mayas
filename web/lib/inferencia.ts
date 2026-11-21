@@ -24,7 +24,11 @@ export interface Recursos {
 }
 
 async function leerJSON<T>(nombre: string): Promise<T> {
-  const r = await fetch(`${RUTA_MODELOS}/${nombre}`, { cache: "force-cache" });
+  // La URL lleva el id del despliegue: metadata.json, thresholds.json y labels.json tienen
+  // nombre fijo y se cacheaban para siempre, así que un navegador seguía usando el modelo
+  // de una corrida anterior aunque el sitio ya sirviera otra (visto el 2026-11-20).
+  const v = process.env.NEXT_PUBLIC_BUILD_ID ?? "dev";
+  const r = await fetch(`${RUTA_MODELOS}/${nombre}?v=${v}`, { cache: "force-cache" });
   if (!r.ok) throw new Error(`No se pudo leer ${nombre} (${r.status})`);
   return (await r.json()) as T;
 }

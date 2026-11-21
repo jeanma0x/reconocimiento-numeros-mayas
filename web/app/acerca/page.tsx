@@ -53,7 +53,7 @@ function Glifo({ valor }: { valor: number }) {
 export default function Acerca() {
   const [meta, setMeta] = useState<Metadata | null>(null);
   useEffect(() => {
-    fetch("/models/metadata.json")
+    fetch(`/models/metadata.json?v=${process.env.NEXT_PUBLIC_BUILD_ID ?? "dev"}`)
       .then((r) => r.json())
       .then(setMeta)
       .catch(() => {});
